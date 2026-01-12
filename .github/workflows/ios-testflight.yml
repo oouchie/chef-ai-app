@@ -50,11 +50,15 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           echo "${{ secrets.IOS_PROVISIONING_PROFILE }}" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision
 
+      - name: Create API Key File
+        run: |
+          echo "${{ secrets.APP_STORE_CONNECT_API_KEY }}" | base64 --decode > /tmp/AuthKey.p8
+
       - name: Build and Upload to TestFlight
         env:
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
           APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}
-          APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+          APP_STORE_CONNECT_API_KEY_PATH: /tmp/AuthKey.p8
         run: |
           cd ios/App
           bundle exec fastlane ios beta
