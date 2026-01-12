@@ -34,15 +34,10 @@ jobs:
           ruby-version: '3.2'
           bundler-cache: true
 
-      - name: Install Fastlane
+      - name: Install Fastlane and CocoaPods
         run: |
           cd ios/App
-          gem install fastlane
-
-      - name: Install CocoaPods
-        run: |
-          cd ios/App
-          pod install
+          bundle install
 
       - name: Import Code Signing Certificates
         uses: apple-actions/import-codesign-certs@v2
@@ -62,7 +57,7 @@ jobs:
           APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
         run: |
           cd ios/App
-          fastlane ios beta
+          bundle exec fastlane ios beta
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
