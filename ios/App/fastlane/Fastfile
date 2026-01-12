@@ -21,7 +21,8 @@ platform :ios do
       scheme: "App",
       export_method: "app-store",
       output_directory: "./output",
-      output_name: "ChefAI.ipa"
+      output_name: "ChefAI.ipa",
+      xcargs: "-allowProvisioningUpdates DEVELOPMENT_TEAM=#{ENV['APPLE_TEAM_ID']}"
     )
 
     # Upload to TestFlight
