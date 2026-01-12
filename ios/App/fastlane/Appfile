@@ -1,0 +1,9 @@
+# App Store Connect API Key (set via environment variables in CI)
+# app_identifier is your Bundle ID
+
+app_identifier("com.chefai.app")
+
+# You can also set these directly if not using environment variables:
+# apple_id("your-apple-id@email.com")
+# team_id("YOUR_TEAM_ID")
+# itc_team_id("YOUR_ITC_TEAM_ID")
