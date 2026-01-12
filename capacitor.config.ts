@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.chefai2.app',
-  appName: 'Chef AI',
+  appName: 'RecipePilot',
   webDir: 'out',
   server: {
     androidScheme: 'https',
