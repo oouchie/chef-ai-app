@@ -20,7 +20,7 @@ platform :ios do
       use_automatic_signing: false,
       path: "App.xcodeproj",
       team_id: ENV["APPLE_TEAM_ID"],
-      bundle_identifier: "com.chefai.app",
+      bundle_identifier: "com.chefai2.app",
       profile_name: ENV["PROVISIONING_PROFILE_NAME"],
       code_sign_identity: "iPhone Distribution"
     )
@@ -34,7 +34,7 @@ platform :ios do
       output_name: "ChefAI.ipa",
       export_options: {
         provisioningProfiles: {
-          "com.chefai.app" => ENV["PROVISIONING_PROFILE_NAME"]
+          "com.chefai2.app" => ENV["PROVISIONING_PROFILE_NAME"]
         }
       }
     )

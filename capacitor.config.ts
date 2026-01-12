@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.chefai.app',
+  appId: 'com.chefai2.app',
   appName: 'Chef AI',
   webDir: 'out',
   server: {
