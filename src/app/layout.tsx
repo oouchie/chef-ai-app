@@ -21,13 +21,17 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Chef AI - Your Personal Recipe Assistant",
+  title: "RecipePilot - Your AI Recipe Assistant",
   description: "Discover recipes from around the world with AI-powered recommendations. Find the perfect dish for any occasion.",
-  keywords: ["recipes", "cooking", "AI", "chatbot", "world cuisine", "cooking assistant"],
+  keywords: ["recipes", "cooking", "AI", "chatbot", "world cuisine", "cooking assistant", "RecipePilot"],
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Chef AI",
+    title: "RecipePilot",
+  },
+  icons: {
+    icon: "/images/logo.png",
+    apple: "/images/logo.png",
   },
   formatDetection: {
     telephone: false,

@@ -86,7 +86,7 @@ export default function Sidebar({
         <div className="p-3">
           <button
             onClick={onNewSession}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors font-medium"
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl hover:from-amber-600 hover:to-orange-600 transition-all font-medium shadow-md shadow-amber-500/20"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -113,10 +113,10 @@ export default function Sidebar({
                     {dateSessions.map((session) => (
                       <div
                         key={session.id}
-                        className={`group flex items-start gap-2 p-3 rounded-lg cursor-pointer transition-colors ${
+                        className={`group flex items-start gap-2 p-3 rounded-xl cursor-pointer transition-all ${
                           currentSessionId === session.id
-                            ? 'bg-primary/10 text-primary'
-                            : 'hover:bg-background'
+                            ? 'bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-700 border border-amber-200'
+                            : 'hover:bg-background border border-transparent'
                         }`}
                         onClick={() => onSelectSession(session.id)}
                       >
@@ -152,7 +152,7 @@ export default function Sidebar({
         {/* Footer */}
         <div className="p-4 border-t border-border text-center">
           <p className="text-xs text-muted">
-            Powered by Chef AI
+            Powered by <span className="text-amber-600 font-medium">RecipePilot</span>
           </p>
         </div>
       </aside>

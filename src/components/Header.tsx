@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { WorldRegion, WORLD_REGIONS } from '@/types';
 
 interface HeaderProps {
@@ -30,9 +31,15 @@ export default function Header({
       <div className="max-w-6xl mx-auto px-4 py-3">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            <span className="text-3xl">👨‍🍳</span>
+            <Image
+              src="/images/logo.png"
+              alt="RecipePilot"
+              width={44}
+              height={44}
+              className="rounded-lg"
+            />
             <div>
-              <h1 className="text-xl font-bold text-foreground">Chef AI</h1>
+              <h1 className="text-xl font-bold text-foreground">RecipePilot</h1>
               <p className="text-xs text-muted">Your Personal Recipe Assistant</p>
             </div>
           </div>

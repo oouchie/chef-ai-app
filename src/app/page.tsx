@@ -23,6 +23,7 @@ import {
   deleteTodo,
 } from '@/lib/storage';
 import { sendChatMessage, getStoredApiKey } from '@/lib/chat';
+import { purchaseService } from '@/lib/purchases';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
 import ChatInterface from '@/components/ChatInterface';
@@ -31,6 +32,32 @@ import TodoList from '@/components/TodoList';
 import CookingTools from '@/components/CookingTools';
 import MealPlanner from '@/components/MealPlanner';
 import Settings from '@/components/Settings';
+import Paywall from '@/components/Paywall';
+
+const FREE_TIER_LIMIT = 10;
+const USAGE_STORAGE_KEY = 'recipepilot_daily_usage';
+
+// Helper to get today's date key
+function getTodayKey(): string {
+  return new Date().toISOString().split('T')[0];
+}
+
+// Helper to get/set daily usage from localStorage
+function getDailyUsage(): { date: string; count: number } {
+  if (typeof window === 'undefined') return { date: getTodayKey(), count: 0 };
+  const stored = localStorage.getItem(USAGE_STORAGE_KEY);
+  if (stored) {
+    const data = JSON.parse(stored);
+    if (data.date === getTodayKey()) {
+      return data;
+    }
+  }
+  return { date: getTodayKey(), count: 0 };
+}
+
+function setDailyUsage(count: number): void {
+  localStorage.setItem(USAGE_STORAGE_KEY, JSON.stringify({ date: getTodayKey(), count }));
+}
 
 export default function Home() {
   const [state, setState] = useState<AppState>(defaultState);
@@ -44,11 +71,29 @@ export default function Home() {
   const [selectedRecipeForTools, setSelectedRecipeForTools] = useState<Recipe | undefined>();
   const [mounted, setMounted] = useState(false);
 
+  // Paywall & usage state
+  const [paywallOpen, setPaywallOpen] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
+  const [dailyUsage, setDailyUsageState] = useState(0);
+  const remainingRequests = isPremium ? Infinity : Math.max(0, FREE_TIER_LIMIT - dailyUsage);
+
   // Load state from localStorage on mount
   useEffect(() => {
     const loaded = loadState();
     setState(loaded);
     setMounted(true);
+
+    // Load daily usage
+    const usage = getDailyUsage();
+    setDailyUsageState(usage.count);
+
+    // Initialize RevenueCat and check premium status
+    const initPurchases = async () => {
+      await purchaseService.initialize();
+      const status = await purchaseService.getSubscriptionStatus();
+      setIsPremium(status.isPremium);
+    };
+    initPurchases();
   }, []);
 
   // Save state to localStorage on change
@@ -79,6 +124,12 @@ export default function Home() {
     async (content: string) => {
       if (!state.currentSessionId) return;
 
+      // Check usage limit for free tier
+      if (!isPremium && dailyUsage >= FREE_TIER_LIMIT) {
+        setPaywallOpen(true);
+        return;
+      }
+
       // Add user message
       const userMessage: Omit<Message, 'id' | 'timestamp'> = {
         role: 'user',
@@ -91,6 +142,13 @@ export default function Home() {
       }));
 
       setIsLoading(true);
+
+      // Increment usage for free tier
+      if (!isPremium) {
+        const newCount = dailyUsage + 1;
+        setDailyUsageState(newCount);
+        setDailyUsage(newCount);
+      }
 
       try {
         const updatedSession = state.sessions.find(
@@ -157,8 +215,17 @@ export default function Home() {
         setIsLoading(false);
       }
     },
-    [state.currentSessionId, state.sessions, state.selectedRegion]
+    [state.currentSessionId, state.sessions, state.selectedRegion, isPremium, dailyUsage]
   );
+
+  // Handle subscription purchase
+  const handleSubscribe = useCallback(async () => {
+    const result = await purchaseService.purchasePremium();
+    if (result.success && result.isPremium) {
+      setIsPremium(true);
+      setPaywallOpen(false);
+    }
+  }, []);
 
   const handleNewSession = useCallback(() => {
     const newSession = createSession();
@@ -255,8 +322,8 @@ export default function Home() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <span className="text-5xl mb-4 block animate-bounce">👨‍🍳</span>
-          <p className="text-muted">Loading Chef AI...</p>
+          <span className="text-5xl mb-4 block animate-bounce">🍳</span>
+          <p className="text-muted">Loading RecipePilot...</p>
         </div>
       </div>
     );
@@ -295,7 +362,7 @@ export default function Home() {
         {/* Mobile menu button */}
         <button
           onClick={() => setSidebarOpen(true)}
-          className="lg:hidden fixed bottom-4 left-4 z-30 p-3 bg-primary text-white rounded-full shadow-lg hover:bg-primary-dark transition-colors"
+          className="lg:hidden fixed bottom-4 left-4 z-30 p-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full shadow-lg shadow-amber-500/30 hover:from-amber-600 hover:to-orange-600 transition-all"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
             <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
@@ -312,6 +379,8 @@ export default function Home() {
             onSaveRecipe={handleSaveRecipe}
             onAddToShoppingList={handleAddToShoppingList}
             savedRecipeIds={state.savedRecipes.map((r) => r.id)}
+            isPremium={isPremium}
+            onShowPaywall={() => setPaywallOpen(true)}
           />
         </div>
       </div>
@@ -371,6 +440,14 @@ export default function Home() {
       <Settings
         isOpen={settingsOpen}
         onClose={() => setSettingsOpen(false)}
+      />
+
+      {/* Paywall modal */}
+      <Paywall
+        isOpen={paywallOpen}
+        onClose={() => setPaywallOpen(false)}
+        onSubscribe={handleSubscribe}
+        remainingRequests={remainingRequests === Infinity ? undefined : remainingRequests}
       />
     </div>
   );
