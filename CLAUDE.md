@@ -637,7 +637,7 @@ npx cap open android
 
 **Current versions:**
 - Marketing Version: 1.0
-- Build Number: 5
+- Build Number: 6
 
 ### Environment Variables
 
