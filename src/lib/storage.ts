@@ -149,3 +149,16 @@ export function createCookingChecklist(recipe: Recipe): TodoItem[] {
     createTodo(`Step ${index + 1}: ${instruction}`, 'cooking', recipe.id)
   );
 }
+
+// Restaurant recipe trial tracking
+const RESTAURANT_TRIAL_KEY = 'recipepilot_restaurant_trial_used';
+
+export function hasUsedRestaurantTrial(): boolean {
+  if (typeof window === 'undefined') return false;
+  return localStorage.getItem(RESTAURANT_TRIAL_KEY) === 'true';
+}
+
+export function markRestaurantTrialUsed(): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(RESTAURANT_TRIAL_KEY, 'true');
+}

@@ -16,11 +16,12 @@ interface CookingToolsProps {
   recipe?: Recipe;
   isOpen: boolean;
   onClose: () => void;
+  onTimerStateChange?: (hasActiveTimer: boolean) => void;
 }
 
 type ToolTab = 'scale' | 'substitute' | 'timer' | 'nutrition' | 'convert';
 
-export default function CookingTools({ recipe, isOpen, onClose }: CookingToolsProps) {
+export default function CookingTools({ recipe, isOpen, onClose, onTimerStateChange }: CookingToolsProps) {
   const [activeTab, setActiveTab] = useState<ToolTab>('timer');
   const [servings, setServings] = useState(recipe?.servings || 4);
   const [searchIngredient, setSearchIngredient] = useState('');
@@ -32,6 +33,11 @@ export default function CookingTools({ recipe, isOpen, onClose }: CookingToolsPr
   const [customMinutes, setCustomMinutes] = useState(5);
   const [convertFrom, setConvertFrom] = useState({ amount: 1, unit: 'cup' });
   const [convertTo, setConvertTo] = useState('ml');
+
+  // Notify parent of timer state changes
+  useEffect(() => {
+    onTimerStateChange?.(activeTimer !== null && activeTimer.isRunning);
+  }, [activeTimer?.isRunning, activeTimer !== null, onTimerStateChange]);
 
   // Timer logic
   useEffect(() => {

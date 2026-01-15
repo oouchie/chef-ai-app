@@ -133,6 +133,15 @@ export default function SavedRecipes({
                   </div>
                   <p className="font-semibold text-lg">No saved recipes yet</p>
                   <p className="text-sm text-muted mt-2 max-w-xs mx-auto">Save recipes from the chat to access them here anytime</p>
+                  <button
+                    onClick={onClose}
+                    className="mt-6 px-6 py-3 btn-gradient rounded-xl font-semibold hover:shadow-glow-primary transition-all"
+                  >
+                    🍳 Find Recipes
+                  </button>
+                  <p className="text-xs text-muted mt-4">
+                    💡 Tip: Ask for "quick weeknight dinner" or "healthy breakfast ideas"
+                  </p>
                 </>
               ) : (
                 <>

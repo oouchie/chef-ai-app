@@ -42,7 +42,7 @@ When recommending a recipe, ALWAYS include a JSON block with the recipe details 
 \`\`\`recipe
 {
   "name": "Recipe Name",
-  "region": "asian|african|european|latin-american|middle-eastern|north-american|oceanian|caribbean",
+  "region": "asian|african|european|latin-american|middle-eastern|southern|soul-food|cajun-creole|tex-mex|bbq|new-england|midwest|oceanian|caribbean",
   "cuisine": "Specific Cuisine (e.g., Italian, Thai)",
   "description": "Brief appetizing description",
   "prepTime": "15 mins",
@@ -170,7 +170,13 @@ function generateDemoResponse(message: string, region?: WorldRegion | 'all'): st
     'european': "European cooking offers such wonderful variety - from rustic French country dishes to hearty German meals. I have a classic recipe that showcases the best of European culinary traditions.",
     'latin-american': "Latin American food is vibrant, colorful, and full of life! The combination of fresh ingredients and bold spices creates unforgettable dishes. Let me share something delicious with you.",
     'middle-eastern': "Middle Eastern cuisine features beautiful aromatic spices and time-honored cooking techniques. From mezze spreads to grilled meats, the flavors are absolutely wonderful.",
-    'north-american': "From Southern comfort food to Cajun specialties, North American cuisine has so many delicious traditions to explore. Let me share a classic recipe with you.",
+    'southern': "Southern cooking is all about comfort and hospitality! Think crispy fried chicken, fluffy biscuits, creamy grits, and that famous sweet tea. Let me share a recipe that'll warm your soul.",
+    'soul-food': "Soul food carries deep cultural roots and incredible flavor! These recipes have been passed down through generations, from collard greens to mac and cheese to candied yams. Let me share something special.",
+    'cajun-creole': "Louisiana cooking is a celebration of bold spices and rich flavors! From gumbo to jambalaya to crawfish étouffée, Cajun and Creole cuisines are truly unique. Let me take you to the Bayou!",
+    'tex-mex': "Tex-Mex is the perfect fusion of Texas and Mexican flavors! Think sizzling fajitas, cheesy enchiladas, and that addictive queso. Let me share a recipe that brings the border flavors to your kitchen.",
+    'bbq': "American BBQ is an art form! Whether it's Texas brisket, Carolina pulled pork, or Memphis ribs, the low-and-slow smoking tradition creates incredible flavors. Let me share some pitmaster secrets.",
+    'new-england': "New England cuisine celebrates the bounty of the Atlantic coast! From creamy clam chowder to buttery lobster rolls, these dishes are coastal classics. Let me share something from the Northeast.",
+    'midwest': "Midwest cooking is hearty, comforting, and delicious! Think cheese curds, hotdish casseroles, and farm-fresh flavors. Let me share a recipe that captures that heartland hospitality.",
     'oceanian': "Oceanian cuisine celebrates fresh seafood and tropical flavors. The cooking traditions of Australia, New Zealand, and the Pacific Islands offer unique and delicious dishes.",
     'caribbean': "Caribbean food is a beautiful fusion of African, European, and indigenous influences. The bold spices and tropical ingredients create incredibly flavorful dishes!",
   };

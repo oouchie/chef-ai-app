@@ -134,7 +134,9 @@ interface AppState {
 // World regions for cuisine filtering
 type WorldRegion =
   | 'african' | 'asian' | 'european' | 'latin-american'
-  | 'middle-eastern' | 'north-american' | 'oceanian' | 'caribbean';
+  | 'middle-eastern' | 'southern' | 'soul-food' | 'cajun-creole'
+  | 'tex-mex' | 'bbq' | 'new-england' | 'midwest'
+  | 'oceanian' | 'caribbean';
 ```
 
 ---
@@ -438,9 +440,20 @@ const response = await sendChatMessage(
 | European | 🇪🇺 | Italian, French, Spanish, Greek |
 | Latin American | 🌎 | Mexican, Brazilian, Peruvian |
 | Middle Eastern | 🕌 | Lebanese, Turkish, Persian |
-| North American | 🇺🇸 | American, Southern, Cajun |
 | Oceanian | 🌊 | Australian, Hawaiian, Polynesian |
 | Caribbean | 🏝️ | Jamaican, Cuban, Puerto Rican |
+
+**US Regional Cuisines (expanded from North American):**
+
+| Region | Flag | Description |
+|--------|------|-------------|
+| Southern | 🍗 | Fried chicken, biscuits, gravy, comfort classics |
+| Soul Food | 🥘 | Collard greens, mac & cheese, candied yams |
+| Cajun & Creole | 🦐 | Gumbo, jambalaya, étouffée, Louisiana flavors |
+| Tex-Mex | 🌮 | Fajitas, enchiladas, queso, Texas-Mexican fusion |
+| BBQ | 🍖 | Texas brisket, Carolina pulled pork, Memphis ribs |
+| New England | 🦞 | Clam chowder, lobster rolls, coastal classics |
+| Midwest | 🌾 | Casseroles, cheese curds, farm-to-table comfort |
 
 ---
 
@@ -484,12 +497,15 @@ The AI assistant is configured as "Chef AI" with:
 
 ### Recipe JSON Format
 
-Claude returns recipes in a structured JSON block:
+Claude returns recipes in a structured JSON block.
+
+**Valid region values:** `african`, `asian`, `european`, `latin-american`, `middle-eastern`, `southern`, `soul-food`, `cajun-creole`, `tex-mex`, `bbq`, `new-england`, `midwest`, `oceanian`, `caribbean`
+
 ```json
 {
   "name": "Recipe Name",
-  "region": "asian",
-  "cuisine": "Thai",
+  "region": "southern",
+  "cuisine": "Southern Comfort",
   "description": "Brief description",
   "prepTime": "15 mins",
   "cookTime": "30 mins",
@@ -562,9 +578,38 @@ npx supabase secrets set CLAUDE_API_KEY=sk-ant-xxxxx
 | Feature | Free Tier | Premium |
 |---------|-----------|---------|
 | AI Requests | 10/day | Unlimited |
+| Restaurant Recipes | 1 free trial | Unlimited |
 | Voice Input | ❌ | ✅ |
 | Meal Planning | Basic | Advanced |
 | Ad-free | ❌ | ✅ |
+
+### Restaurant Recipes Feature (Premium)
+
+Users can get homemade recipes inspired by their favorite restaurants:
+
+**Component:** `src/components/RestaurantRecipes.tsx`
+
+**Features:**
+- Curated list of 12 popular restaurants (Olive Garden, Chipotle, Chick-fil-A, etc.)
+- Search for any restaurant
+- Popular dishes per restaurant with one-tap recipe generation
+- 1 free trial for non-premium users, then paywall
+
+**Popular Restaurants Included:**
+- Olive Garden, Chipotle, Cheesecake Factory, Chick-fil-A
+- Panda Express, Texas Roadhouse, Red Lobster, Cracker Barrel
+- P.F. Chang's, In-N-Out, Popeyes, Outback Steakhouse
+
+**Trial Tracking:**
+```typescript
+import { hasUsedRestaurantTrial, markRestaurantTrialUsed } from '@/lib/storage';
+
+// Check if user has used their free trial
+const trialUsed = hasUsedRestaurantTrial();
+
+// Mark trial as used
+markRestaurantTrialUsed();
+```
 
 ### Implementation
 

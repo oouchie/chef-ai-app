@@ -61,7 +61,13 @@ export type WorldRegion =
   | 'european'
   | 'latin-american'
   | 'middle-eastern'
-  | 'north-american'
+  | 'southern'
+  | 'soul-food'
+  | 'cajun-creole'
+  | 'tex-mex'
+  | 'bbq'
+  | 'new-england'
+  | 'midwest'
   | 'oceanian'
   | 'caribbean';
 
@@ -110,11 +116,53 @@ export const WORLD_REGIONS: RegionInfo[] = [
     description: 'Aromatic spices, grilled meats, and mezze spreads',
   },
   {
-    id: 'north-american',
-    name: 'North American',
-    flag: '🇺🇸',
-    cuisines: ['American', 'Southern', 'Cajun', 'Canadian', 'Tex-Mex'],
-    description: 'Comfort food classics and regional specialties',
+    id: 'southern',
+    name: 'Southern',
+    flag: '🍗',
+    cuisines: ['Southern Comfort', 'Georgia', 'Tennessee', 'Alabama', 'Mississippi'],
+    description: 'Fried chicken, biscuits, gravy, and comfort classics',
+  },
+  {
+    id: 'soul-food',
+    name: 'Soul Food',
+    flag: '🥘',
+    cuisines: ['African-American', 'Traditional Soul', 'Modern Soul', 'Sunday Dinner'],
+    description: 'Rich, hearty dishes with deep cultural roots',
+  },
+  {
+    id: 'cajun-creole',
+    name: 'Cajun & Creole',
+    flag: '🦐',
+    cuisines: ['Louisiana', 'New Orleans', 'Cajun', 'Creole', 'Bayou'],
+    description: 'Bold spices, gumbo, jambalaya, and étouffée',
+  },
+  {
+    id: 'tex-mex',
+    name: 'Tex-Mex',
+    flag: '🌮',
+    cuisines: ['Texas-Mexican', 'Southwestern', 'Border', 'Chili', 'Fajitas'],
+    description: 'Tacos, enchiladas, queso, and Texan-Mexican fusion',
+  },
+  {
+    id: 'bbq',
+    name: 'BBQ',
+    flag: '🍖',
+    cuisines: ['Texas BBQ', 'Kansas City', 'Carolina', 'Memphis', 'Smoker'],
+    description: 'Smoked meats, ribs, brisket, and tangy sauces',
+  },
+  {
+    id: 'new-england',
+    name: 'New England',
+    flag: '🦞',
+    cuisines: ['Massachusetts', 'Maine', 'Connecticut', 'Rhode Island', 'Vermont'],
+    description: 'Clam chowder, lobster rolls, and coastal favorites',
+  },
+  {
+    id: 'midwest',
+    name: 'Midwest',
+    flag: '🌾',
+    cuisines: ['Chicago', 'Wisconsin', 'Minnesota', 'Ohio', 'Farm-to-Table'],
+    description: 'Hearty casseroles, cheese curds, and comfort classics',
   },
   {
     id: 'oceanian',

@@ -59,18 +59,24 @@ export default function RecipeCard({
 
         {/* Quick stats */}
         <div className="flex flex-wrap gap-2 mt-4">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-background/60 text-xs font-medium">
-            <span>⏱️</span>
-            <span>Prep: {recipe.prepTime}</span>
-          </div>
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-background/60 text-xs font-medium">
-            <span>🍳</span>
-            <span>Cook: {recipe.cookTime}</span>
-          </div>
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-background/60 text-xs font-medium">
-            <span>👥</span>
-            <span>Serves: {recipe.servings}</span>
-          </div>
+          {recipe.prepTime && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-background/60 text-xs font-medium">
+              <span>⏱️</span>
+              <span>Prep: {recipe.prepTime}</span>
+            </div>
+          )}
+          {recipe.cookTime && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-background/60 text-xs font-medium">
+              <span>🍳</span>
+              <span>Cook: {recipe.cookTime}</span>
+            </div>
+          )}
+          {recipe.servings && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-background/60 text-xs font-medium">
+              <span>👥</span>
+              <span>Serves: {recipe.servings}</span>
+            </div>
+          )}
         </div>
 
         {/* Tags */}
@@ -124,32 +130,36 @@ export default function RecipeCard({
         <div className="border-t border-white/10 animate-slide-up">
           {/* Tabs */}
           <div className="flex bg-gradient-to-r from-background/50 via-transparent to-background/50">
-            <button
-              onClick={() => setActiveTab('ingredients')}
-              className={`flex-1 py-3.5 text-sm font-semibold transition-all relative ${
-                activeTab === 'ingredients'
-                  ? 'text-primary'
-                  : 'text-muted hover:text-foreground'
-              }`}
-            >
-              Ingredients ({recipe.ingredients.length})
-              {activeTab === 'ingredients' && (
-                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-gradient-to-r from-primary to-accent rounded-full shadow-glow-primary" />
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('instructions')}
-              className={`flex-1 py-3.5 text-sm font-semibold transition-all relative ${
-                activeTab === 'instructions'
-                  ? 'text-primary'
-                  : 'text-muted hover:text-foreground'
-              }`}
-            >
-              Steps ({recipe.instructions.length})
-              {activeTab === 'instructions' && (
-                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-gradient-to-r from-primary to-accent rounded-full shadow-glow-primary" />
-              )}
-            </button>
+            {recipe.ingredients && recipe.ingredients.length > 0 && (
+              <button
+                onClick={() => setActiveTab('ingredients')}
+                className={`flex-1 py-3.5 text-sm font-semibold transition-all relative ${
+                  activeTab === 'ingredients'
+                    ? 'text-primary'
+                    : 'text-muted hover:text-foreground'
+                }`}
+              >
+                Ingredients ({recipe.ingredients.length})
+                {activeTab === 'ingredients' && (
+                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-gradient-to-r from-primary to-accent rounded-full shadow-glow-primary" />
+                )}
+              </button>
+            )}
+            {recipe.instructions && recipe.instructions.length > 0 && (
+              <button
+                onClick={() => setActiveTab('instructions')}
+                className={`flex-1 py-3.5 text-sm font-semibold transition-all relative ${
+                  activeTab === 'instructions'
+                    ? 'text-primary'
+                    : 'text-muted hover:text-foreground'
+                }`}
+              >
+                Steps ({recipe.instructions.length})
+                {activeTab === 'instructions' && (
+                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-gradient-to-r from-primary to-accent rounded-full shadow-glow-primary" />
+                )}
+              </button>
+            )}
             {recipe.tips && recipe.tips.length > 0 && (
               <button
                 onClick={() => setActiveTab('tips')}
@@ -169,7 +179,7 @@ export default function RecipeCard({
 
           {/* Tab content */}
           <div className="p-4 max-h-80 overflow-y-auto">
-            {activeTab === 'ingredients' && (
+            {activeTab === 'ingredients' && recipe.ingredients && recipe.ingredients.length > 0 && (
               <ul className="space-y-2.5">
                 {recipe.ingredients.map((ing, index) => (
                   <li
@@ -191,7 +201,7 @@ export default function RecipeCard({
               </ul>
             )}
 
-            {activeTab === 'instructions' && (
+            {activeTab === 'instructions' && recipe.instructions && recipe.instructions.length > 0 && (
               <ol className="space-y-4">
                 {recipe.instructions.map((instruction, index) => (
                   <li
@@ -207,7 +217,7 @@ export default function RecipeCard({
               </ol>
             )}
 
-            {activeTab === 'tips' && recipe.tips && (
+            {activeTab === 'tips' && recipe.tips && recipe.tips.length > 0 && (
               <ul className="space-y-3">
                 {recipe.tips.map((tip, index) => (
                   <li
@@ -219,6 +229,14 @@ export default function RecipeCard({
                   </li>
                 ))}
               </ul>
+            )}
+
+            {/* Empty state */}
+            {(!recipe.ingredients || recipe.ingredients.length === 0) &&
+             (!recipe.instructions || recipe.instructions.length === 0) && (
+              <div className="text-center py-8 text-muted">
+                <p>Recipe details not available</p>
+              </div>
             )}
           </div>
         </div>

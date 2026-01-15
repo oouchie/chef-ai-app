@@ -11,9 +11,12 @@ interface HeaderProps {
   onOpenSavedRecipes: () => void;
   onOpenTodos: () => void;
   onOpenTools: () => void;
+  onOpenTimer: () => void;
   onOpenMealPlanner: () => void;
+  onOpenRestaurantRecipes: () => void;
   onOpenSettings: () => void;
   onNewChat: () => void;
+  hasActiveTimer?: boolean;
 }
 
 export default function Header({
@@ -24,9 +27,12 @@ export default function Header({
   onOpenSavedRecipes,
   onOpenTodos,
   onOpenTools,
+  onOpenTimer,
   onOpenMealPlanner,
+  onOpenRestaurantRecipes,
   onOpenSettings,
   onNewChat,
+  hasActiveTimer,
 }: HeaderProps) {
   return (
     <header
@@ -90,8 +96,22 @@ export default function Header({
             </button>
 
             <button
+              onClick={onOpenTimer}
+              className={`btn-glass flex items-center gap-2 px-3 py-2 rounded-xl ${
+                hasActiveTimer ? 'bg-gradient-to-r from-accent/20 to-primary/20 animate-pulse' : ''
+              }`}
+              title="Timer"
+            >
+              <span className="text-lg">⏱️</span>
+              <span className="hidden sm:inline text-sm font-medium">Timer</span>
+              {hasActiveTimer && (
+                <span className="w-2 h-2 bg-accent rounded-full animate-pulse" />
+              )}
+            </button>
+
+            <button
               onClick={onOpenTools}
-              className="btn-glass flex items-center gap-2 px-3 py-2 rounded-xl"
+              className="btn-glass flex items-center gap-2 px-3 py-2 rounded-xl hidden sm:flex"
               title="Cooking Tools"
             >
               <span className="text-lg">🛠️</span>
@@ -108,6 +128,15 @@ export default function Header({
             </button>
 
             <button
+              onClick={onOpenRestaurantRecipes}
+              className="btn-glass flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-purple-500/10 to-pink-500/10 hover:from-purple-500/20 hover:to-pink-500/20"
+              title="Restaurant Recipes (Premium)"
+            >
+              <span className="text-lg">🍽️</span>
+              <span className="hidden sm:inline text-sm font-medium">Restaurants</span>
+            </button>
+
+            <button
               onClick={onOpenSettings}
               className="btn-glass p-2.5 rounded-xl"
               title="Settings"
@@ -118,6 +147,10 @@ export default function Header({
         </div>
 
         {/* Region selector */}
+        <div className="relative">
+          {/* Scroll fade indicators */}
+          <div className="absolute left-0 top-0 bottom-2 w-8 bg-gradient-to-r from-background/80 to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-2 w-8 bg-gradient-to-l from-background/80 to-transparent z-10 pointer-events-none" />
         <div className="flex items-center gap-2 overflow-x-auto pb-2 -mb-2 scrollbar-hide">
           <button
             onClick={() => onRegionChange('all')}
@@ -144,6 +177,7 @@ export default function Header({
               {region.flag} {region.name}
             </button>
           ))}
+        </div>
         </div>
       </div>
     </header>

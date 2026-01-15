@@ -22,10 +22,13 @@ import {
   createTodo,
   toggleTodo,
   deleteTodo,
+  hasUsedRestaurantTrial,
+  markRestaurantTrialUsed,
 } from '@/lib/storage';
 import { sendChatMessage as sendChatViaEdge } from '@/lib/supabase';
 import { sendChatMessage as sendChatDirect, getStoredApiKey } from '@/lib/chat';
 import { purchaseService } from '@/lib/purchases';
+import { hapticLight, hapticSuccess, hapticMedium } from '@/lib/haptics';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
 import ChatInterface from '@/components/ChatInterface';
@@ -36,6 +39,8 @@ import MealPlanner from '@/components/MealPlanner';
 import Settings from '@/components/Settings';
 import Paywall from '@/components/Paywall';
 import IngredientSelector from '@/components/IngredientSelector';
+import RestaurantRecipes from '@/components/RestaurantRecipes';
+import { useToast } from '@/components/Toast';
 
 const FREE_TIER_LIMIT = 10;
 const USAGE_STORAGE_KEY = 'recipepilot_daily_usage';
@@ -73,16 +78,24 @@ export default function Home() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [selectedRecipeForTools, setSelectedRecipeForTools] = useState<Recipe | undefined>();
   const [mounted, setMounted] = useState(false);
+  const [hasActiveTimer, setHasActiveTimer] = useState(false);
 
   // Ingredient selector state
   const [ingredientSelectorOpen, setIngredientSelectorOpen] = useState(false);
   const [selectedRecipeForShopping, setSelectedRecipeForShopping] = useState<Recipe | undefined>();
+
+  // Restaurant recipes state
+  const [restaurantRecipesOpen, setRestaurantRecipesOpen] = useState(false);
+  const [restaurantTrialUsed, setRestaurantTrialUsed] = useState(false);
 
   // Paywall & usage state
   const [paywallOpen, setPaywallOpen] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
   const [dailyUsage, setDailyUsageState] = useState(0);
   const remainingRequests = isPremium ? Infinity : Math.max(0, FREE_TIER_LIMIT - dailyUsage);
+
+  // Toast notifications
+  const { showToast } = useToast();
 
   // Load state from localStorage on mount
   useEffect(() => {
@@ -93,6 +106,9 @@ export default function Home() {
     // Load daily usage
     const usage = getDailyUsage();
     setDailyUsageState(usage.count);
+
+    // Load restaurant trial status
+    setRestaurantTrialUsed(hasUsedRestaurantTrial());
 
     // Initialize RevenueCat and check premium status
     const initPurchases = async () => {
@@ -135,6 +151,13 @@ export default function Home() {
       if (!isPremium && dailyUsage >= FREE_TIER_LIMIT) {
         setPaywallOpen(true);
         return;
+      }
+
+      // Warn when getting close to limit
+      if (!isPremium && dailyUsage === FREE_TIER_LIMIT - 2) {
+        showToast(`2 free requests remaining today`, 'warning');
+      } else if (!isPremium && dailyUsage === FREE_TIER_LIMIT - 1) {
+        showToast(`Last free request for today!`, 'warning');
       }
 
       // Add user message
@@ -217,11 +240,30 @@ export default function Home() {
         }
       } catch (error) {
         console.error('Error sending message:', error);
-        // Add error message
+
+        // Determine specific error message
+        let errorContent = "I couldn't process your request. ";
+        const errorStr = String(error);
+
+        if (errorStr.includes('network') || errorStr.includes('fetch')) {
+          errorContent += "Please check your internet connection and try again.";
+          showToast('Network error - check your connection', 'error');
+        } else if (errorStr.includes('401') || errorStr.includes('403') || errorStr.includes('Invalid API')) {
+          errorContent += "Your API key may be invalid or expired. Please check Settings.";
+          showToast('API key error - check Settings', 'error', {
+            action: { label: 'Settings', onClick: () => setSettingsOpen(true) }
+          });
+        } else if (errorStr.includes('429') || errorStr.includes('rate limit')) {
+          errorContent += "Too many requests. Please wait a moment and try again.";
+          showToast('Rate limit reached - please wait', 'warning');
+        } else {
+          errorContent += "Please try again or add your API key in Settings for better responses.";
+          showToast('Something went wrong - try again', 'error');
+        }
+
         const errorMessage: Omit<Message, 'id' | 'timestamp'> = {
           role: 'assistant',
-          content:
-            "I'm sorry, I encountered an error. Please try again. You can add your API key in Settings for AI-powered responses.",
+          content: errorContent,
         };
         setState((prev) => ({
           ...prev,
@@ -257,6 +299,42 @@ export default function Home() {
     setSidebarOpen(false);
   }, []);
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Check for Cmd (Mac) or Ctrl (Windows/Linux)
+      const isModifier = e.metaKey || e.ctrlKey;
+
+      if (isModifier && e.key === 'k') {
+        e.preventDefault();
+        // Focus the chat input
+        const chatInput = document.querySelector('textarea[placeholder*="Ask"]') as HTMLTextAreaElement;
+        chatInput?.focus();
+      }
+
+      if (isModifier && e.key === 'n') {
+        e.preventDefault();
+        handleNewSession();
+      }
+
+      // Escape to close panels/modals
+      if (e.key === 'Escape') {
+        if (restaurantRecipesOpen) setRestaurantRecipesOpen(false);
+        else if (savedRecipesOpen) setSavedRecipesOpen(false);
+        else if (todosOpen) setTodosOpen(false);
+        else if (toolsOpen) setToolsOpen(false);
+        else if (mealPlannerOpen) setMealPlannerOpen(false);
+        else if (settingsOpen) setSettingsOpen(false);
+        else if (paywallOpen) setPaywallOpen(false);
+        else if (ingredientSelectorOpen) setIngredientSelectorOpen(false);
+        else if (sidebarOpen) setSidebarOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [handleNewSession, restaurantRecipesOpen, savedRecipesOpen, todosOpen, toolsOpen, mealPlannerOpen, settingsOpen, paywallOpen, ingredientSelectorOpen, sidebarOpen]);
+
   const handleSelectSession = useCallback((id: string) => {
     setState((prev) => ({ ...prev, currentSessionId: id }));
     setSidebarOpen(false);
@@ -282,20 +360,28 @@ export default function Home() {
   }, []);
 
   const handleSaveRecipe = useCallback((recipe: Recipe) => {
+    hapticMedium();
     setState((prev) => {
       const isAlreadySaved = prev.savedRecipes.some((r) => r.id === recipe.id);
       if (isAlreadySaved) {
+        showToast('Removed from saved recipes', 'info');
         return {
           ...prev,
           savedRecipes: unsaveRecipe(prev.savedRecipes, recipe.id),
         };
       }
+      showToast('Recipe saved!', 'success', {
+        action: {
+          label: 'View',
+          onClick: () => setSavedRecipesOpen(true),
+        },
+      });
       return {
         ...prev,
         savedRecipes: saveRecipe(prev.savedRecipes, recipe),
       };
     });
-  }, []);
+  }, [showToast]);
 
   const handleAddToShoppingList = useCallback((recipe: Recipe) => {
     // Open ingredient selector instead of adding all directly
@@ -306,6 +392,7 @@ export default function Home() {
   const handleAddSelectedIngredients = useCallback((ingredients: Ingredient[]) => {
     if (!selectedRecipeForShopping) return;
 
+    hapticSuccess();
     const shoppingItems = ingredients.map((ing) =>
       createTodo(
         `${ing.amount || ''} ${ing.unit || ''} ${ing.name || 'Unknown'}${ing.notes ? ` (${ing.notes})` : ''}`.trim(),
@@ -318,15 +405,23 @@ export default function Home() {
       ...prev,
       todos: [...prev.todos, ...shoppingItems],
     }));
+    showToast(`Added ${ingredients.length} item${ingredients.length !== 1 ? 's' : ''} to shopping list`, 'success');
     setTodosOpen(true);
-  }, [selectedRecipeForShopping]);
+  }, [selectedRecipeForShopping, showToast]);
 
   const handleToggleTodo = useCallback((id: string) => {
-    setState((prev) => ({
-      ...prev,
-      todos: toggleTodo(prev.todos, id),
-    }));
-  }, []);
+    hapticLight();
+    setState((prev) => {
+      const todo = prev.todos.find(t => t.id === id);
+      if (todo && !todo.completed) {
+        showToast('Task completed!', 'success');
+      }
+      return {
+        ...prev,
+        todos: toggleTodo(prev.todos, id),
+      };
+    });
+  }, [showToast]);
 
   const handleDeleteTodo = useCallback((id: string) => {
     setState((prev) => ({
@@ -390,9 +485,12 @@ export default function Home() {
             setSelectedRecipeForTools(state.savedRecipes[0]);
             setToolsOpen(true);
           }}
+          onOpenTimer={() => setToolsOpen(true)}
           onOpenMealPlanner={() => setMealPlannerOpen(true)}
+          onOpenRestaurantRecipes={() => setRestaurantRecipesOpen(true)}
           onOpenSettings={() => setSettingsOpen(true)}
           onNewChat={handleNewSession}
+          hasActiveTimer={hasActiveTimer}
         />
 
         {/* Mobile menu button */}
@@ -456,6 +554,7 @@ export default function Home() {
         recipe={selectedRecipeForTools}
         isOpen={toolsOpen}
         onClose={() => setToolsOpen(false)}
+        onTimerStateChange={setHasActiveTimer}
       />
 
       {/* Meal planner modal */}
@@ -502,6 +601,22 @@ export default function Home() {
           onAddSelected={handleAddSelectedIngredients}
         />
       )}
+
+      {/* Restaurant recipes modal (Premium feature) */}
+      <RestaurantRecipes
+        isOpen={restaurantRecipesOpen}
+        onClose={() => setRestaurantRecipesOpen(false)}
+        onSearchRecipe={(query) => {
+          handleSendMessage(query);
+        }}
+        isPremium={isPremium}
+        hasUsedTrial={restaurantTrialUsed}
+        onTrialUsed={() => {
+          markRestaurantTrialUsed();
+          setRestaurantTrialUsed(true);
+        }}
+        onShowPaywall={() => setPaywallOpen(true)}
+      />
     </div>
   );
 }

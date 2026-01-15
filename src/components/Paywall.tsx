@@ -93,7 +93,7 @@ export default function Paywall({ isOpen, onClose, onSubscribe, remainingRequest
                       <span className="text-red-400">✗</span> <span className="text-gray-400">Unlimited recipes</span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <span className="text-red-400">✗</span> <span className="text-gray-400">Priority responses</span>
+                      <span className="text-red-400">✗</span> <span className="text-gray-400">Restaurant-inspired recipes</span>
                     </li>
                   </ul>
                 </div>
@@ -115,6 +115,9 @@ export default function Paywall({ isOpen, onClose, onSubscribe, remainingRequest
                       <span className="text-green-600 font-bold">✓</span> Unlimited recipes
                     </li>
                     <li className="flex items-center gap-2">
+                      <span className="text-green-600 font-bold">✓</span> 🍽️ Restaurant-inspired recipes
+                    </li>
+                    <li className="flex items-center gap-2">
                       <span className="text-green-600 font-bold">✓</span> Advanced meal planning
                     </li>
                     <li className="flex items-center gap-2">
@@ -122,9 +125,6 @@ export default function Paywall({ isOpen, onClose, onSubscribe, remainingRequest
                     </li>
                     <li className="flex items-center gap-2">
                       <span className="text-green-600 font-bold">✓</span> Priority AI responses
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="text-green-600 font-bold">✓</span> Cooking tools & timers
                     </li>
                   </ul>
                 </div>

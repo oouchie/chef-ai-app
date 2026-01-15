@@ -186,11 +186,41 @@ export default function TodoList({
         <div className="flex-1 overflow-y-auto p-4">
           {Object.keys(groupedTodos).length === 0 ? (
             <div className="text-center py-12 px-4">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-secondary/10 to-teal-500/10 flex items-center justify-center">
-                <span className="text-3xl">📝</span>
+              <div className="w-20 h-20 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-secondary/10 to-teal-500/10 flex items-center justify-center">
+                <span className="text-4xl">📝</span>
               </div>
-              <p className="font-semibold">No tasks yet!</p>
-              <p className="text-sm text-muted mt-2">Add ingredients to your shopping list from recipes</p>
+              <p className="font-semibold text-lg">No tasks yet!</p>
+              <p className="text-sm text-muted mt-2 max-w-xs mx-auto">
+                {filter === 'all'
+                  ? 'Find a recipe and add ingredients to your shopping list'
+                  : `No ${filter} tasks. Try selecting "All" to see everything.`}
+              </p>
+              {filter === 'all' && (
+                <>
+                  <button
+                    onClick={onClose}
+                    className="mt-6 px-6 py-3 btn-gradient-secondary rounded-xl font-semibold hover:shadow-glow-secondary transition-all"
+                  >
+                    🍳 Find Recipes
+                  </button>
+                  <div className="mt-6 space-y-2">
+                    <p className="text-xs font-medium text-muted">Quick add ideas:</p>
+                    <div className="flex flex-wrap gap-2 justify-center">
+                      {['Buy groceries', 'Prep vegetables', 'Marinate meat'].map((suggestion) => (
+                        <button
+                          key={suggestion}
+                          onClick={() => {
+                            onAdd(suggestion, suggestion.includes('Buy') ? 'shopping' : 'prep');
+                          }}
+                          className="text-xs px-3 py-1.5 glass-card rounded-lg hover:shadow-sm transition-all"
+                        >
+                          + {suggestion}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           ) : (
             <div className="space-y-6">
