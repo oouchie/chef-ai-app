@@ -7,6 +7,7 @@ import {
   Recipe,
   WorldRegion,
   TodoItem,
+  Ingredient,
 } from '@/types';
 import {
   loadState,
@@ -34,6 +35,7 @@ import CookingTools from '@/components/CookingTools';
 import MealPlanner from '@/components/MealPlanner';
 import Settings from '@/components/Settings';
 import Paywall from '@/components/Paywall';
+import IngredientSelector from '@/components/IngredientSelector';
 
 const FREE_TIER_LIMIT = 10;
 const USAGE_STORAGE_KEY = 'recipepilot_daily_usage';
@@ -71,6 +73,10 @@ export default function Home() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [selectedRecipeForTools, setSelectedRecipeForTools] = useState<Recipe | undefined>();
   const [mounted, setMounted] = useState(false);
+
+  // Ingredient selector state
+  const [ingredientSelectorOpen, setIngredientSelectorOpen] = useState(false);
+  const [selectedRecipeForShopping, setSelectedRecipeForShopping] = useState<Recipe | undefined>();
 
   // Paywall & usage state
   const [paywallOpen, setPaywallOpen] = useState(false);
@@ -292,13 +298,28 @@ export default function Home() {
   }, []);
 
   const handleAddToShoppingList = useCallback((recipe: Recipe) => {
-    const shoppingItems = createShoppingList(recipe);
+    // Open ingredient selector instead of adding all directly
+    setSelectedRecipeForShopping(recipe);
+    setIngredientSelectorOpen(true);
+  }, []);
+
+  const handleAddSelectedIngredients = useCallback((ingredients: Ingredient[]) => {
+    if (!selectedRecipeForShopping) return;
+
+    const shoppingItems = ingredients.map((ing) =>
+      createTodo(
+        `${ing.amount || ''} ${ing.unit || ''} ${ing.name || 'Unknown'}${ing.notes ? ` (${ing.notes})` : ''}`.trim(),
+        'shopping',
+        selectedRecipeForShopping.id
+      )
+    );
+
     setState((prev) => ({
       ...prev,
       todos: [...prev.todos, ...shoppingItems],
     }));
     setTodosOpen(true);
-  }, []);
+  }, [selectedRecipeForShopping]);
 
   const handleToggleTodo = useCallback((id: string) => {
     setState((prev) => ({
@@ -468,6 +489,19 @@ export default function Home() {
         onSubscribe={handleSubscribe}
         remainingRequests={remainingRequests === Infinity ? undefined : remainingRequests}
       />
+
+      {/* Ingredient selector modal */}
+      {selectedRecipeForShopping && (
+        <IngredientSelector
+          recipe={selectedRecipeForShopping}
+          isOpen={ingredientSelectorOpen}
+          onClose={() => {
+            setIngredientSelectorOpen(false);
+            setSelectedRecipeForShopping(undefined);
+          }}
+          onAddSelected={handleAddSelectedIngredients}
+        />
+      )}
     </div>
   );
 }
