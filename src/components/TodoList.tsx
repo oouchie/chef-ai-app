@@ -98,7 +98,10 @@ export default function TodoList({
       {/* Panel */}
       <div className="relative w-full max-w-md h-full glass-strong border-l border-white/20 overflow-hidden flex flex-col animate-slide-up">
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-white/10 bg-gradient-to-r from-secondary/5 to-teal-500/5">
+        <div
+          className="flex items-center justify-between p-5 border-b border-white/10 bg-gradient-to-r from-secondary/5 to-teal-500/5"
+          style={{ paddingTop: 'max(1.25rem, env(safe-area-inset-top))' }}
+        >
           <div className="flex items-center gap-3">
             <span className="w-10 h-10 rounded-xl bg-gradient-to-br from-secondary to-teal-500 flex items-center justify-center shadow-md shadow-secondary/20 text-lg">
               ✅
