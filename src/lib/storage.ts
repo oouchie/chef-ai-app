@@ -126,9 +126,13 @@ export function isRecipeSaved(recipes: Recipe[], recipeId: string): boolean {
 
 // Create todos from recipe ingredients
 export function createShoppingList(recipe: Recipe): TodoItem[] {
+  if (!recipe?.ingredients || !Array.isArray(recipe.ingredients)) {
+    console.warn('Recipe has no ingredients:', recipe);
+    return [];
+  }
   return recipe.ingredients.map((ing) =>
     createTodo(
-      `${ing.amount} ${ing.unit} ${ing.name}${ing.notes ? ` (${ing.notes})` : ''}`,
+      `${ing.amount || ''} ${ing.unit || ''} ${ing.name || 'Unknown'}${ing.notes ? ` (${ing.notes})` : ''}`.trim(),
       'shopping',
       recipe.id
     )
@@ -137,6 +141,10 @@ export function createShoppingList(recipe: Recipe): TodoItem[] {
 
 // Create todos from recipe instructions
 export function createCookingChecklist(recipe: Recipe): TodoItem[] {
+  if (!recipe?.instructions || !Array.isArray(recipe.instructions)) {
+    console.warn('Recipe has no instructions:', recipe);
+    return [];
+  }
   return recipe.instructions.map((instruction, index) =>
     createTodo(`Step ${index + 1}: ${instruction}`, 'cooking', recipe.id)
   );
