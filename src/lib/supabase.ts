@@ -1,9 +1,21 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+let supabaseInstance: SupabaseClient | null = null;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Lazy initialization to avoid build-time errors with static export
+export function getSupabase(): SupabaseClient {
+  if (!supabaseInstance) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error('Supabase environment variables are not configured');
+    }
+
+    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey);
+  }
+  return supabaseInstance;
+}
 
 export interface UserProfile {
   id: string;
@@ -21,7 +33,7 @@ export interface UsageResult {
 
 // Check if user can make a request (handles free tier limits)
 export async function checkUsageLimit(userId: string): Promise<UsageResult> {
-  const { data, error } = await supabase.rpc('check_usage_limit', {
+  const { data, error } = await getSupabase().rpc('check_usage_limit', {
     user_uuid: userId,
   });
 
@@ -36,7 +48,7 @@ export async function checkUsageLimit(userId: string): Promise<UsageResult> {
 
 // Get user profile
 export async function getProfile(userId: string): Promise<UserProfile | null> {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('profiles')
     .select('*')
     .eq('id', userId)
@@ -56,7 +68,7 @@ export async function updatePremiumStatus(
   isPremium: boolean,
   expiresAt?: string
 ) {
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('profiles')
     .update({
       is_premium: isPremium,
@@ -76,7 +88,7 @@ export async function sendChatMessage(
   region: string,
   history: { role: string; content: string }[]
 ) {
-  const { data, error } = await supabase.functions.invoke('chat', {
+  const { data, error } = await getSupabase().functions.invoke('chat', {
     body: { message, region, history },
   });
 
