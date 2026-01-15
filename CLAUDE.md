@@ -40,12 +40,17 @@ recipe-chatbot/
 │   │   ├── TodoList.tsx       # Shopping/cooking tasks
 │   │   ├── SavedRecipes.tsx   # Favorites collection
 │   │   ├── Settings.tsx       # User preferences
-│   │   └── Paywall.tsx        # Premium subscription UI
+│   │   ├── Paywall.tsx        # Premium subscription UI
+│   │   ├── RestaurantRecipes.tsx # Restaurant-inspired recipes (Premium)
+│   │   ├── IngredientSelector.tsx # Shopping list ingredient picker
+│   │   ├── Toast.tsx          # Toast notification system
+│   │   └── Providers.tsx      # Context providers wrapper
 │   ├── lib/                   # Utilities and services
 │   │   ├── chat.ts           # Claude API client (direct)
 │   │   ├── supabase.ts       # Supabase client & Edge Function calls
 │   │   ├── storage.ts        # Local storage helpers
-│   │   └── purchases.ts      # RevenueCat integration
+│   │   ├── purchases.ts      # RevenueCat integration
+│   │   └── haptics.ts        # Haptic feedback utilities
 │   └── types/                # TypeScript definitions
 │       └── index.ts          # All type definitions
 ├── supabase/
@@ -457,6 +462,57 @@ const response = await sendChatMessage(
 
 ---
 
+## UX Features
+
+### Toast Notifications
+
+**Component:** `src/components/Toast.tsx`
+
+Global toast notification system with types: `success`, `error`, `warning`, `info`
+
+```typescript
+import { useToast } from '@/components/Toast';
+
+const { showToast } = useToast();
+
+// Basic usage
+showToast('Recipe saved!', 'success');
+
+// With action button
+showToast('Added to cart', 'success', {
+  action: { label: 'View', onClick: () => openCart() }
+});
+```
+
+### Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Cmd/Ctrl + K` | Focus chat input |
+| `Cmd/Ctrl + N` | Start new chat |
+| `Escape` | Close open panel/modal |
+
+### Haptic Feedback
+
+**File:** `src/lib/haptics.ts`
+
+```typescript
+import { hapticLight, hapticSuccess, hapticMedium } from '@/lib/haptics';
+
+hapticLight();   // Light tap feedback
+hapticMedium();  // Medium tap (save actions)
+hapticSuccess(); // Success feedback
+```
+
+### Ingredient Selector
+
+When adding items to shopping list, users can:
+- Select/deselect individual ingredients
+- Use "Select All" / "Clear All" buttons
+- See "Have it" badge for unchecked items
+
+---
+
 ## Claude API Integration
 
 ### Edge Function Configuration
@@ -682,7 +738,7 @@ npx cap open android
 
 **Current versions:**
 - Marketing Version: 1.0
-- Build Number: 11
+- Build Number: 12
 
 ### Environment Variables
 
