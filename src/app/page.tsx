@@ -23,6 +23,7 @@ import {
   deleteTodo,
 } from '@/lib/storage';
 import { sendChatMessage as sendChatViaEdge } from '@/lib/supabase';
+import { sendChatMessage as sendChatDirect, getStoredApiKey } from '@/lib/chat';
 import { purchaseService } from '@/lib/purchases';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
@@ -156,21 +157,36 @@ export default function Home() {
         );
         const conversationHistory = updatedSession?.messages.slice(-10) || [];
 
-        // Use Supabase Edge Function (API key stored in Supabase secrets)
-        const data = await sendChatViaEdge(
-          content,
-          state.selectedRegion,
-          [
-            ...conversationHistory.map(m => ({ role: m.role, content: m.content })),
-            { role: 'user', content },
-          ]
-        );
+        let data: { response: string; recipe?: unknown };
+        const storedApiKey = getStoredApiKey();
+
+        // Try Supabase Edge Function first, fall back to direct API with stored key
+        try {
+          data = await sendChatViaEdge(
+            content,
+            state.selectedRegion,
+            [
+              ...conversationHistory.map(m => ({ role: m.role, content: m.content })),
+              { role: 'user', content },
+            ]
+          );
+        } catch (supabaseError) {
+          console.log('Supabase failed, trying direct API:', supabaseError);
+          // Fall back to direct API call with stored key
+          const directResult = await sendChatDirect(
+            content,
+            state.selectedRegion,
+            conversationHistory.map(m => ({ role: m.role, content: m.content })),
+            storedApiKey || undefined
+          );
+          data = { response: directResult.response, recipe: directResult.recipe || undefined };
+        }
 
         // Add assistant message
         const assistantMessage: Omit<Message, 'id' | 'timestamp'> = {
           role: 'assistant',
           content: data.response,
-          recipe: data.recipe || undefined,
+          recipe: data.recipe as Message['recipe'],
         };
 
         setState((prev) => ({
