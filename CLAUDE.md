@@ -648,7 +648,24 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJxxx
 NEXT_PUBLIC_REVENUECAT_API_KEY=appl_xxx
 ```
 
-**Supabase Secrets (production):**
+**GitHub Repository Secrets (CI/CD):**
+
+Required secrets for iOS TestFlight deployment (Settings → Secrets → Actions):
+
+| Secret | Purpose |
+|--------|---------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL for API calls |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous/public key |
+| `IOS_CERTIFICATE_P12` | Base64-encoded iOS distribution certificate |
+| `IOS_CERTIFICATE_PASSWORD` | Password for the P12 certificate |
+| `IOS_PROVISIONING_PROFILE` | Base64-encoded provisioning profile |
+| `APP_STORE_CONNECT_API_KEY` | Base64-encoded App Store Connect API key (.p8) |
+| `APP_STORE_CONNECT_API_KEY_ID` | API Key ID from App Store Connect |
+| `APP_STORE_CONNECT_API_ISSUER_ID` | Issuer ID from App Store Connect |
+| `APPLE_TEAM_ID` | Apple Developer Team ID |
+| `PROVISIONING_PROFILE_NAME` | Name of the provisioning profile |
+
+**Supabase Edge Function Secrets (production):**
 ```
 CLAUDE_API_KEY=sk-ant-xxx
 ```
