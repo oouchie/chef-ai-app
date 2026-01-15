@@ -3,13 +3,31 @@
 :root {
   --background: #faf7f2;
   --foreground: #1a1a1a;
-  --primary: #e85d04;
-  --primary-dark: #dc2f02;
-  --secondary: #2d6a4f;
-  --accent: #f48c06;
+  --primary: #ff6b35;
+  --primary-dark: #e85d04;
+  --secondary: #4ecdc4;
+  --accent: #f7931e;
   --card: #ffffff;
   --border: #e5e5e5;
   --muted: #6b7280;
+
+  /* Glassmorphism */
+  --glass-bg: rgba(255, 255, 255, 0.75);
+  --glass-bg-strong: rgba(255, 255, 255, 0.9);
+  --glass-border: rgba(255, 255, 255, 0.4);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+
+  /* Premium gradients */
+  --gradient-primary: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+  --gradient-secondary: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+  --gradient-premium: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --gradient-rose: linear-gradient(135deg, #f43f5e 0%, #ec4899 100%);
+  --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
+
+  /* Glow effects */
+  --glow-primary: 0 0 30px rgba(255, 107, 53, 0.35);
+  --glow-secondary: 0 0 30px rgba(78, 205, 196, 0.35);
+  --glow-rose: 0 0 30px rgba(244, 63, 94, 0.35);
 }
 
 @theme inline {
@@ -28,15 +46,21 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0f0f0f;
-    --foreground: #f5f5f5;
-    --primary: #fb923c;
-    --primary-dark: #f97316;
-    --secondary: #4ade80;
+    --background: #0a0a0a;
+    --foreground: #fafafa;
+    --primary: #ff8c5a;
+    --primary-dark: #ff6b35;
+    --secondary: #5eead4;
     --accent: #fbbf24;
-    --card: #1a1a1a;
-    --border: #333333;
-    --muted: #9ca3af;
+    --card: #141414;
+    --border: #2a2a2a;
+    --muted: #a1a1aa;
+
+    /* Dark glassmorphism */
+    --glass-bg: rgba(20, 20, 20, 0.8);
+    --glass-bg-strong: rgba(30, 30, 30, 0.95);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   }
 }
 
@@ -65,15 +89,38 @@ body {
   background: var(--muted);
 }
 
-/* Animations */
+/* ========================================
+   PREMIUM ANIMATIONS
+   ======================================== */
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
 @keyframes pulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  50% { opacity: 0.6; }
 }
 
 @keyframes bounce {
@@ -81,51 +128,289 @@ body {
   50% { transform: translateY(-5px); }
 }
 
+@keyframes glow {
+  0%, 100% { box-shadow: var(--glow-primary); }
+  50% { box-shadow: 0 0 40px rgba(255, 107, 53, 0.5); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 .animate-fade-in {
-  animation: fadeIn 0.3s ease-out;
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-down {
+  animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
 }
 
 .animate-pulse {
-  animation: pulse 1.5s infinite;
+  animation: pulse 2s ease-in-out infinite;
 }
 
 .animate-bounce {
-  animation: bounce 1s infinite;
+  animation: bounce 1s ease-in-out infinite;
 }
 
-/* Message bubbles */
-.message-user {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+.animate-glow {
+  animation: glow 2s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* ========================================
+   GLASSMORPHISM UTILITIES
+   ======================================== */
+
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+.glass-strong {
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+.glass-card {
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.06),
+    0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card:hover {
+  box-shadow:
+    0 8px 40px rgba(0, 0, 0, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+}
+
+/* ========================================
+   PREMIUM SHADOWS
+   ======================================== */
+
+.shadow-glass {
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.08),
+    0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.shadow-glow-primary {
+  box-shadow: var(--glow-primary);
+}
+
+.shadow-glow-secondary {
+  box-shadow: var(--glow-secondary);
+}
+
+.shadow-glow-rose {
+  box-shadow: var(--glow-rose);
+}
+
+.shadow-premium {
+  box-shadow:
+    0 10px 40px rgba(255, 107, 53, 0.15),
+    0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* ========================================
+   PREMIUM BUTTON STYLES
+   ======================================== */
+
+.btn-glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-glass:hover {
+  background: var(--glass-bg-strong);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.btn-gradient {
+  background: var(--gradient-primary);
   color: white;
+  border: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-gradient:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--glow-primary);
+}
+
+.btn-gradient-secondary {
+  background: var(--gradient-secondary);
+  color: white;
+  border: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-gradient-secondary:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--glow-secondary);
+}
+
+.btn-gradient-rose {
+  background: var(--gradient-rose);
+  color: white;
+  border: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-gradient-rose:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--glow-rose);
+}
+
+/* ========================================
+   MESSAGE BUBBLES - PREMIUM
+   ======================================== */
+
+.message-user {
+  background: var(--gradient-primary);
+  color: white;
+  box-shadow:
+    0 4px 20px rgba(255, 107, 53, 0.25),
+    0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .message-assistant {
-  background: var(--card);
-  border: 1px solid var(--border);
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-left: 3px solid var(--primary);
+  box-shadow: var(--glass-shadow);
 }
 
-/* Recipe card hover */
+/* ========================================
+   RECIPE CARD - PREMIUM
+   ======================================== */
+
 .recipe-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.06),
+    0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .recipe-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px);
+  box-shadow:
+    0 12px 40px rgba(255, 107, 53, 0.15),
+    0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-/* Region selector */
+/* ========================================
+   REGION SELECTOR - PREMIUM
+   ======================================== */
+
 .region-chip {
-  transition: all 0.2s ease;
+  background: var(--glass-bg);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-border);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .region-chip:hover {
-  transform: scale(1.05);
+  transform: scale(1.03);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 .region-chip.active {
-  background: var(--primary);
+  background: var(--gradient-primary);
   color: white;
+  border-color: transparent;
+  box-shadow: var(--glow-primary);
+}
+
+/* ========================================
+   INPUT FIELDS - PREMIUM
+   ======================================== */
+
+.input-glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-border);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.input-glass:focus {
+  background: var(--glass-bg-strong);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.15);
+  outline: none;
+}
+
+/* ========================================
+   BADGES - PREMIUM
+   ======================================== */
+
+.badge-easy {
+  background: var(--gradient-secondary);
+  color: white;
+  box-shadow: 0 2px 8px rgba(78, 205, 196, 0.3);
+}
+
+.badge-medium {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+}
+
+.badge-hard {
+  background: var(--gradient-rose);
+  color: white;
+  box-shadow: 0 2px 8px rgba(244, 63, 94, 0.3);
 }
 
 /* Mobile-specific styles */

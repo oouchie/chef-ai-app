@@ -150,19 +150,24 @@ export default function CookingTools({ recipe, isOpen, onClose }: CookingToolsPr
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-fade-in" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative w-full max-w-2xl max-h-[90vh] bg-card rounded-2xl overflow-hidden flex flex-col animate-fade-in">
+      <div className="relative w-full max-w-2xl max-h-[90vh] glass-strong rounded-2xl overflow-hidden flex flex-col animate-scale-in shadow-premium">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">🛠️</span>
-            <h2 className="font-bold text-lg">Cooking Tools</h2>
+        <div className="flex items-center justify-between p-5 border-b border-white/10 bg-gradient-to-r from-accent/5 to-primary/5">
+          <div className="flex items-center gap-3">
+            <span className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent to-yellow-500 flex items-center justify-center shadow-md shadow-accent/20 text-lg">
+              🛠️
+            </span>
+            <div>
+              <h2 className="font-bold text-lg">Cooking Tools</h2>
+              <p className="text-xs text-muted">Timers, converters & more</p>
+            </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-background rounded-lg transition-colors"
+            className="p-2.5 btn-glass rounded-xl hover:shadow-glow-primary transition-all"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -171,7 +176,7 @@ export default function CookingTools({ recipe, isOpen, onClose }: CookingToolsPr
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-border overflow-x-auto">
+        <div className="flex border-b border-white/10 overflow-x-auto scrollbar-hide bg-gradient-to-r from-background/50 via-transparent to-background/50">
           {[
             { id: 'timer', label: 'Timer', icon: '⏱️' },
             { id: 'scale', label: 'Scale Recipe', icon: '⚖️' },
@@ -182,14 +187,17 @@ export default function CookingTools({ recipe, isOpen, onClose }: CookingToolsPr
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as ToolTab)}
-              className={`flex-shrink-0 px-4 py-3 text-sm font-medium transition-colors ${
+              className={`flex-shrink-0 px-4 py-4 text-sm font-semibold transition-all relative ${
                 activeTab === tab.id
-                  ? 'text-primary border-b-2 border-primary'
+                  ? 'text-primary'
                   : 'text-muted hover:text-foreground'
               }`}
             >
-              <span className="mr-1">{tab.icon}</span>
+              <span className="mr-1.5">{tab.icon}</span>
               {tab.label}
+              {activeTab === tab.id && (
+                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-gradient-to-r from-primary to-accent rounded-full" />
+              )}
             </button>
           ))}
         </div>
@@ -201,28 +209,32 @@ export default function CookingTools({ recipe, isOpen, onClose }: CookingToolsPr
             <div className="space-y-6">
               {/* Active timer */}
               {activeTimer && (
-                <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-xl p-6 text-center">
-                  <div className="text-4xl mb-2">{activeTimer.preset.icon}</div>
-                  <div className="text-sm text-muted mb-2">{activeTimer.preset.name}</div>
-                  <div className={`text-5xl font-bold mb-4 font-mono ${
-                    activeTimer.remaining <= 10 && activeTimer.isRunning ? 'text-red-500 animate-pulse' : ''
+                <div className="glass-card rounded-2xl p-8 text-center bg-gradient-to-br from-primary/5 via-transparent to-accent/5">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/30">
+                    <span className="text-3xl">{activeTimer.preset.icon}</span>
+                  </div>
+                  <div className="text-sm font-medium text-muted mb-3">{activeTimer.preset.name}</div>
+                  <div className={`text-6xl font-bold mb-6 font-mono tracking-tight ${
+                    activeTimer.remaining <= 10 && activeTimer.isRunning
+                      ? 'bg-gradient-to-r from-rose-500 to-red-500 bg-clip-text text-transparent animate-pulse'
+                      : 'bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent'
                   }`}>
                     {formatTime(activeTimer.remaining)}
                   </div>
                   <div className="flex justify-center gap-3">
                     <button
                       onClick={toggleTimer}
-                      className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+                      className={`px-8 py-3 rounded-xl font-semibold transition-all ${
                         activeTimer.isRunning
-                          ? 'bg-yellow-500 text-white hover:bg-yellow-600'
-                          : 'bg-green-500 text-white hover:bg-green-600'
+                          ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white shadow-md shadow-amber-500/20 hover:shadow-lg'
+                          : 'btn-gradient-secondary shadow-glow-secondary'
                       }`}
                     >
                       {activeTimer.isRunning ? 'Pause' : 'Resume'}
                     </button>
                     <button
                       onClick={resetTimer}
-                      className="px-6 py-2 bg-background border border-border rounded-lg font-medium hover:bg-primary/10 transition-colors"
+                      className="px-8 py-3 btn-glass rounded-xl font-semibold hover:shadow-sm transition-all"
                     >
                       Reset
                     </button>
@@ -231,8 +243,11 @@ export default function CookingTools({ recipe, isOpen, onClose }: CookingToolsPr
               )}
 
               {/* Custom timer */}
-              <div className="bg-background rounded-xl p-4">
-                <h3 className="font-medium mb-3">Custom Timer</h3>
+              <div className="glass-card rounded-xl p-5">
+                <h3 className="font-semibold mb-4 flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center text-sm">⏱️</span>
+                  Custom Timer
+                </h3>
                 <div className="flex gap-3">
                   <input
                     type="number"
@@ -240,13 +255,13 @@ export default function CookingTools({ recipe, isOpen, onClose }: CookingToolsPr
                     max="180"
                     value={customMinutes}
                     onChange={(e) => setCustomMinutes(parseInt(e.target.value) || 1)}
-                    className="flex-1 px-4 py-2 bg-card border border-border rounded-lg focus:border-primary focus:outline-none"
+                    className="flex-1 px-4 py-3 glass border border-white/30 rounded-xl focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-center text-lg font-semibold"
                   />
-                  <span className="flex items-center text-muted">minutes</span>
+                  <span className="flex items-center text-muted font-medium">minutes</span>
                   <button
                     onClick={startCustomTimer}
                     disabled={!!activeTimer?.isRunning}
-                    className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark disabled:opacity-50 transition-colors"
+                    className="px-6 py-3 btn-gradient rounded-xl font-semibold disabled:opacity-50 hover:shadow-glow-primary transition-all"
                   >
                     Start
                   </button>
@@ -254,22 +269,25 @@ export default function CookingTools({ recipe, isOpen, onClose }: CookingToolsPr
               </div>
 
               {/* Preset timers */}
-              <div className="space-y-4">
+              <div className="space-y-5">
                 {Object.entries(timerCategories).map(([category, presets]) => (
                   <div key={category}>
-                    <h3 className="font-medium text-sm text-muted mb-2">{category}</h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <h3 className="font-semibold text-sm text-muted mb-3 flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-primary to-accent"></span>
+                      {category}
+                    </h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       {presets.map((preset) => (
                         <button
                           key={preset.name}
                           onClick={() => startTimer(preset)}
                           disabled={!!activeTimer?.isRunning}
-                          className="flex items-center gap-2 p-3 bg-background rounded-lg hover:bg-primary/10 disabled:opacity-50 transition-colors text-left"
+                          className="flex items-center gap-3 p-4 glass-card rounded-xl hover:shadow-glow-primary disabled:opacity-50 transition-all text-left"
                         >
-                          <span className="text-xl">{preset.icon}</span>
+                          <span className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center text-xl">{preset.icon}</span>
                           <div>
-                            <div className="text-sm font-medium">{preset.name}</div>
-                            <div className="text-xs text-muted">{formatTime(preset.duration)}</div>
+                            <div className="text-sm font-semibold">{preset.name}</div>
+                            <div className="text-xs text-muted font-medium">{formatTime(preset.duration)}</div>
                           </div>
                         </button>
                       ))}

@@ -16,19 +16,47 @@ serve(async (req) => {
   try {
     const { message, region, history } = await req.json();
 
-    // Build system prompt
-    const systemPrompt = `You are RecipePilot, a friendly AI chef assistant. You help users discover and cook delicious recipes from around the world.
+    // Build system prompt (matches client-side prompt)
+    const systemPrompt = `You are Chef AI, a friendly and knowledgeable culinary assistant who helps home cooks discover and master recipes from around the world.
 
-${region && region !== "all" ? `The user is interested in ${region} cuisine.` : ""}
+Your personality:
+- Warm, encouraging, and passionate about food
+- Share interesting cultural context about dishes
+- Offer practical tips for home cooks
+- Suggest ingredient substitutions when appropriate
+- Consider dietary restrictions when mentioned
 
-When suggesting recipes:
-- Provide clear ingredient lists with measurements
-- Give step-by-step cooking instructions
-- Include cooking times and serving sizes
-- Suggest variations or substitutions when helpful
+${region && region !== "all" ? `The user is currently exploring ${region} cuisine.` : "The user is exploring cuisines from all regions."}
 
-Format recipes clearly with sections for Ingredients and Instructions.
-Be conversational, encouraging, and passionate about food!`;
+When recommending a recipe, ALWAYS include a JSON block with the recipe details in this exact format:
+\`\`\`recipe
+{
+  "name": "Recipe Name",
+  "region": "asian|african|european|latin-american|middle-eastern|north-american|oceanian|caribbean",
+  "cuisine": "Specific Cuisine (e.g., Italian, Thai)",
+  "description": "Brief appetizing description",
+  "prepTime": "15 mins",
+  "cookTime": "30 mins",
+  "servings": 4,
+  "difficulty": "Easy|Medium|Hard",
+  "ingredients": [
+    {"name": "ingredient", "amount": "1", "unit": "cup", "notes": "optional notes"}
+  ],
+  "instructions": [
+    "Step 1 instruction",
+    "Step 2 instruction"
+  ],
+  "tips": ["Helpful tip 1", "Helpful tip 2"],
+  "tags": ["tag1", "tag2"]
+}
+\`\`\`
+
+Guidelines:
+- Keep responses conversational but informative
+- Include the recipe JSON block when sharing a specific recipe
+- Offer to modify recipes based on dietary needs
+- Share cooking tips and cultural background
+- Be encouraging to beginner cooks`;
 
     // Call Claude API
     const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -53,22 +81,29 @@ Be conversational, encouraging, and passionate about food!`;
     }
 
     const data = await response.json();
-    const assistantMessage = data.content[0].text;
+    const content = data.content[0].text;
 
-    // Try to extract recipe if present
+    // Extract recipe from response if present (matches client-side parsing)
+    const recipeMatch = content.match(/```recipe\s*([\s\S]*?)\s*```/);
     let recipe = null;
-    if (assistantMessage.includes("Ingredients") && assistantMessage.includes("Instructions")) {
-      // Simple recipe extraction
-      const titleMatch = assistantMessage.match(/^#?\s*(.+?)(?:\n|Ingredients)/);
-      recipe = {
-        id: crypto.randomUUID(),
-        title: titleMatch ? titleMatch[1].trim().replace(/[#*]/g, "") : "Recipe",
-        content: assistantMessage,
-      };
+
+    if (recipeMatch) {
+      try {
+        const recipeData = JSON.parse(recipeMatch[1]);
+        recipe = {
+          id: crypto.randomUUID(),
+          ...recipeData,
+        };
+      } catch {
+        console.error("Failed to parse recipe JSON");
+      }
     }
 
+    // Clean up the response text (remove recipe JSON block)
+    const cleanResponse = content.replace(/```recipe[\s\S]*?```/g, "").trim();
+
     return new Response(
-      JSON.stringify({ response: assistantMessage, recipe }),
+      JSON.stringify({ response: cleanResponse, recipe }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {

@@ -50,22 +50,26 @@ export default function SavedRecipes({
     <div className="fixed inset-0 z-50 flex items-start justify-end">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-fade-in"
         onClick={onClose}
       />
 
       {/* Panel */}
-      <div className="relative w-full max-w-2xl h-full bg-card border-l border-border overflow-hidden flex flex-col animate-fade-in">
+      <div className="relative w-full max-w-2xl h-full glass-strong border-l border-white/20 overflow-hidden flex flex-col animate-slide-up">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">📖</span>
-            <h2 className="font-bold text-lg">Saved Recipes</h2>
-            <span className="text-sm text-muted">({recipes.length})</span>
+        <div className="flex items-center justify-between p-5 border-b border-white/10 bg-gradient-to-r from-primary/5 to-accent/5">
+          <div className="flex items-center gap-3">
+            <span className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 to-pink-500 flex items-center justify-center shadow-md shadow-rose-500/20 text-lg">
+              📖
+            </span>
+            <div>
+              <h2 className="font-bold text-lg">Saved Recipes</h2>
+              <p className="text-xs text-muted">{recipes.length} recipe{recipes.length !== 1 ? 's' : ''} saved</p>
+            </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-background rounded-lg transition-colors"
+            className="p-2.5 btn-glass rounded-xl hover:shadow-glow-primary transition-all"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -74,20 +78,25 @@ export default function SavedRecipes({
         </div>
 
         {/* Search and filters */}
-        <div className="p-4 border-b border-border space-y-3">
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search recipes..."
-            className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:border-primary focus:outline-none text-sm"
-          />
+        <div className="p-4 border-b border-white/10 space-y-3">
+          <div className="relative">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-muted">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+            </svg>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search recipes..."
+              className="w-full pl-10 pr-4 py-3 glass border border-white/30 rounded-xl focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:shadow-glow-primary text-sm transition-all"
+            />
+          </div>
 
-          <div className="flex gap-2 overflow-x-auto">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide">
             <select
               value={filterRegion}
               onChange={(e) => setFilterRegion(e.target.value as WorldRegion | 'all')}
-              className="flex-shrink-0 px-3 py-1.5 text-sm bg-background border border-border rounded-lg focus:border-primary focus:outline-none"
+              className="flex-shrink-0 px-4 py-2.5 text-sm font-medium glass border border-white/30 rounded-xl focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
             >
               <option value="all">All Regions</option>
               {WORLD_REGIONS.map((region) => (
@@ -100,7 +109,7 @@ export default function SavedRecipes({
             <select
               value={filterDifficulty}
               onChange={(e) => setFilterDifficulty(e.target.value)}
-              className="flex-shrink-0 px-3 py-1.5 text-sm bg-background border border-border rounded-lg focus:border-primary focus:outline-none"
+              className="flex-shrink-0 px-4 py-2.5 text-sm font-medium glass border border-white/30 rounded-xl focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
             >
               <option value="all">All Difficulties</option>
               <option value="Easy">Easy</option>
@@ -113,18 +122,22 @@ export default function SavedRecipes({
         {/* Recipe list */}
         <div className="flex-1 overflow-y-auto p-4">
           {filteredRecipes.length === 0 ? (
-            <div className="text-center py-12 text-muted">
+            <div className="text-center py-16 px-4">
               {recipes.length === 0 ? (
                 <>
-                  <span className="text-5xl mb-4 block">📚</span>
-                  <p className="font-medium">No saved recipes yet</p>
-                  <p className="text-sm mt-1">Save recipes from the chat to access them here</p>
+                  <div className="w-20 h-20 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-rose-500/10 to-pink-500/10 flex items-center justify-center">
+                    <span className="text-4xl">📚</span>
+                  </div>
+                  <p className="font-semibold text-lg">No saved recipes yet</p>
+                  <p className="text-sm text-muted mt-2 max-w-xs mx-auto">Save recipes from the chat to access them here anytime</p>
                 </>
               ) : (
                 <>
-                  <span className="text-5xl mb-4 block">🔍</span>
-                  <p className="font-medium">No recipes match your filters</p>
-                  <p className="text-sm mt-1">Try adjusting your search or filters</p>
+                  <div className="w-20 h-20 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
+                    <span className="text-4xl">🔍</span>
+                  </div>
+                  <p className="font-semibold text-lg">No recipes match your filters</p>
+                  <p className="text-sm text-muted mt-2">Try adjusting your search or filters</p>
                 </>
               )}
             </div>
@@ -135,11 +148,15 @@ export default function SavedRecipes({
                 Object.entries(groupedByRegion).map(([region, regionRecipes]) => {
                   const regionInfo = WORLD_REGIONS.find((r) => r.id === region);
                   return (
-                    <div key={region}>
-                      <div className="flex items-center gap-2 mb-3 pb-2 border-b border-border">
-                        <span className="text-xl">{regionInfo?.flag || '🌍'}</span>
-                        <h3 className="font-semibold">{regionInfo?.name || region}</h3>
-                        <span className="text-sm text-muted">({regionRecipes.length})</span>
+                    <div key={region} className="animate-fade-in">
+                      <div className="flex items-center gap-3 mb-4 pb-3 border-b border-white/10">
+                        <span className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center text-xl shadow-sm">
+                          {regionInfo?.flag || '🌍'}
+                        </span>
+                        <div>
+                          <h3 className="font-bold">{regionInfo?.name || region}</h3>
+                          <p className="text-xs text-muted">{regionRecipes.length} recipe{regionRecipes.length !== 1 ? 's' : ''}</p>
+                        </div>
                       </div>
                       <div className="space-y-4">
                         {regionRecipes.map((recipe) => (

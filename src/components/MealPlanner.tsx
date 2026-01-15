@@ -235,32 +235,37 @@ export default function MealPlanner({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-fade-in" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative w-full max-w-5xl max-h-[90vh] bg-card rounded-2xl overflow-hidden flex flex-col animate-fade-in">
+      <div className="relative w-full max-w-5xl max-h-[90vh] glass-strong rounded-2xl overflow-hidden flex flex-col animate-scale-in shadow-premium">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">📋</span>
-            <h2 className="font-bold text-lg">Meal Planner & Prep</h2>
+        <div className="flex items-center justify-between p-5 border-b border-white/10 bg-gradient-to-r from-primary/5 via-transparent to-accent/5">
+          <div className="flex items-center gap-3">
+            <span className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-md shadow-primary/20 text-lg">
+              📋
+            </span>
+            <div>
+              <h2 className="font-bold text-lg">Meal Planner & Prep</h2>
+              <p className="text-xs text-muted">Plan your weekly meals</p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={generateShoppingList}
-              className="px-3 py-1.5 text-sm bg-secondary text-white rounded-lg hover:bg-secondary/80 transition-colors"
+              className="px-4 py-2.5 text-sm btn-gradient-secondary rounded-xl font-semibold hover:shadow-glow-secondary transition-all"
             >
               🛒 Generate List
             </button>
             <button
               onClick={clearPlan}
-              className="px-3 py-1.5 text-sm bg-background border border-border rounded-lg hover:bg-primary/10 transition-colors"
+              className="px-4 py-2.5 text-sm btn-glass rounded-xl font-medium hover:shadow-sm transition-all"
             >
               Clear Plan
             </button>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-background rounded-lg transition-colors"
+              className="p-2.5 btn-glass rounded-xl hover:shadow-glow-primary transition-all"
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -270,31 +275,32 @@ export default function MealPlanner({
         </div>
 
         {/* Health Goal Selector */}
-        <div className="p-4 bg-gradient-to-r from-primary/5 to-secondary/5 border-b border-border">
-          <div className="flex items-center gap-4 overflow-x-auto pb-2">
-            <span className="text-sm font-medium text-muted flex-shrink-0">Health Goal:</span>
+        <div className="p-4 bg-gradient-to-r from-secondary/5 via-transparent to-teal-500/5 border-b border-white/10">
+          <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide">
+            <span className="text-sm font-semibold text-muted flex-shrink-0">Health Goal:</span>
             {HEALTH_GOALS.map((goal) => (
               <button
                 key={goal.id}
                 onClick={() => setSelectedGoal(goal)}
-                className={`flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                className={`flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all ${
                   selectedGoal.id === goal.id
-                    ? 'bg-primary text-white'
-                    : 'bg-background hover:bg-primary/10'
+                    ? 'btn-gradient shadow-glow-primary'
+                    : 'btn-glass hover:shadow-sm'
                 }`}
               >
                 <span>{goal.icon}</span>
-                <span className="text-sm font-medium">{goal.name}</span>
+                <span className="text-sm font-semibold">{goal.name}</span>
               </button>
             ))}
           </div>
-          <p className="text-xs text-muted mt-2">
-            {selectedGoal.icon} {selectedGoal.description} - Target: {selectedGoal.dailyTargets.calories} cal/day
+          <p className="text-xs text-muted mt-3 flex items-center gap-2">
+            <span className="px-2 py-1 rounded-lg bg-gradient-to-r from-primary/10 to-accent/10 font-medium">{selectedGoal.icon} {selectedGoal.description}</span>
+            <span>Target: <span className="font-bold text-primary">{selectedGoal.dailyTargets.calories}</span> cal/day</span>
           </p>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-border">
+        <div className="flex border-b border-white/10 bg-gradient-to-r from-background/50 via-transparent to-background/50">
           {[
             { id: 'plan', label: 'Weekly Plan', icon: '📅' },
             { id: 'nutrition', label: 'Nutrition Overview', icon: '📊' },
@@ -303,14 +309,17 @@ export default function MealPlanner({
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as typeof activeTab)}
-              className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+              className={`flex-1 px-4 py-4 text-sm font-semibold transition-all relative ${
                 activeTab === tab.id
-                  ? 'text-primary border-b-2 border-primary'
+                  ? 'text-primary'
                   : 'text-muted hover:text-foreground'
               }`}
             >
-              <span className="mr-1">{tab.icon}</span>
+              <span className="mr-1.5">{tab.icon}</span>
               {tab.label}
+              {activeTab === tab.id && (
+                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-16 h-0.5 bg-gradient-to-r from-primary to-accent rounded-full" />
+              )}
             </button>
           ))}
         </div>
@@ -336,10 +345,12 @@ export default function MealPlanner({
                   </div>
 
                   {savedRecipes.length === 0 ? (
-                    <div className="text-center py-8 text-muted">
-                      <span className="text-4xl mb-4 block">📚</span>
-                      <p>No saved recipes yet</p>
-                      <p className="text-sm mt-1">Save recipes from the chat to add them here</p>
+                    <div className="text-center py-12 px-4">
+                      <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
+                        <span className="text-3xl">📚</span>
+                      </div>
+                      <p className="font-semibold">No saved recipes yet</p>
+                      <p className="text-sm text-muted mt-2">Save recipes from the chat to add them here</p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -349,17 +360,16 @@ export default function MealPlanner({
                           <button
                             key={recipe.id}
                             onClick={() => assignRecipe(recipe)}
-                            className="p-3 bg-background rounded-lg border border-border hover:border-primary/50 hover:bg-primary/5 transition-all text-left"
+                            className="p-4 glass-card rounded-xl hover:shadow-glow-primary transition-all text-left"
                           >
-                            <div className="flex items-center gap-2 mb-1">
-                              <span>{regionInfo?.flag || '🍽️'}</span>
-                              <span className="text-xs text-muted">{recipe.cuisine}</span>
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center text-sm">{regionInfo?.flag || '🍽️'}</span>
+                              <span className="text-xs text-muted font-medium">{recipe.cuisine}</span>
                             </div>
-                            <h4 className="font-medium text-sm">{recipe.name}</h4>
-                            <div className="flex gap-2 mt-2 text-xs text-muted">
-                              <span>⏱️ {recipe.prepTime}</span>
-                              <span>•</span>
-                              <span>{estimateNutrition(recipe).calories} cal</span>
+                            <h4 className="font-semibold text-sm">{recipe.name}</h4>
+                            <div className="flex gap-2 mt-3 text-xs">
+                              <span className="px-2 py-1 rounded-lg bg-background/60 font-medium">⏱️ {recipe.prepTime}</span>
+                              <span className="px-2 py-1 rounded-lg bg-primary/10 text-primary font-semibold">{estimateNutrition(recipe).calories} cal</span>
                             </div>
                           </button>
                         );
@@ -544,17 +554,22 @@ export default function MealPlanner({
             <div className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {MEAL_PREP_TIPS.map((tip, index) => (
-                  <div key={index} className="p-4 bg-background rounded-xl">
-                    <div className="text-3xl mb-3">{tip.icon}</div>
+                  <div key={index} className="p-5 glass-card rounded-xl hover:shadow-glow-primary transition-all">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center mb-4">
+                      <span className="text-2xl">{tip.icon}</span>
+                    </div>
                     <h4 className="font-bold mb-2">{tip.title}</h4>
-                    <p className="text-sm text-muted">{tip.tip}</p>
+                    <p className="text-sm text-muted leading-relaxed">{tip.tip}</p>
                   </div>
                 ))}
               </div>
 
               {/* Storage guide */}
-              <div className="bg-gradient-to-r from-secondary/10 to-accent/10 rounded-xl p-6">
-                <h3 className="font-bold mb-4">📦 Food Storage Guide</h3>
+              <div className="glass-card rounded-xl p-6 bg-gradient-to-r from-secondary/5 to-teal-500/5">
+                <h3 className="font-bold mb-4 flex items-center gap-2">
+                  <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-secondary to-teal-500 flex items-center justify-center text-white shadow-sm">📦</span>
+                  Food Storage Guide
+                </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
                   <div>
                     <h4 className="font-medium mb-2">🥶 Refrigerator (3-5 days)</h4>

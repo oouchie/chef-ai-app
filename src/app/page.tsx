@@ -22,7 +22,7 @@ import {
   toggleTodo,
   deleteTodo,
 } from '@/lib/storage';
-import { sendChatMessage, getStoredApiKey } from '@/lib/chat';
+import { sendChatMessage as sendChatViaEdge } from '@/lib/supabase';
 import { purchaseService } from '@/lib/purchases';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
@@ -156,16 +156,14 @@ export default function Home() {
         );
         const conversationHistory = updatedSession?.messages.slice(-10) || [];
 
-        // Use client-side chat function
-        const apiKey = getStoredApiKey();
-        const data = await sendChatMessage(
+        // Use Supabase Edge Function (API key stored in Supabase secrets)
+        const data = await sendChatViaEdge(
           content,
           state.selectedRegion,
           [
             ...conversationHistory.map(m => ({ role: m.role, content: m.content })),
             { role: 'user', content },
-          ],
-          apiKey || undefined
+          ]
         );
 
         // Add assistant message
@@ -362,7 +360,11 @@ export default function Home() {
         {/* Mobile menu button */}
         <button
           onClick={() => setSidebarOpen(true)}
-          className="lg:hidden fixed bottom-4 left-4 z-30 p-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full shadow-lg shadow-amber-500/30 hover:from-amber-600 hover:to-orange-600 transition-all"
+          className="lg:hidden fixed z-30 p-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full shadow-lg shadow-amber-500/30 hover:from-amber-600 hover:to-orange-600 transition-all"
+          style={{
+            bottom: 'calc(5rem + env(safe-area-inset-bottom))',
+            left: 'max(1rem, env(safe-area-inset-left))'
+          }}
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
             <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
