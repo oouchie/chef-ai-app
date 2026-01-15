@@ -153,10 +153,10 @@ type WorldRegion =
 ```css
 :root {
   /* Primary Colors */
-  --primary: #e85d04;           /* Warm orange - food appeal */
-  --primary-hover: #d45003;
-  --secondary: #059669;         /* Fresh green - healthy */
-  --accent: #6C5CE7;            /* Deep purple - premium */
+  --primary: #ff6b35;           /* Warm orange - food appeal */
+  --primary-hover: #e85d04;
+  --secondary: #4ecdc4;         /* Fresh teal - healthy */
+  --accent: #f7931e;            /* Golden accent - warmth */
 
   /* Background */
   --background: #faf7f2;        /* Warm cream */
@@ -169,6 +169,23 @@ type WorldRegion =
   --success: #10b981;
   --error: #ef4444;
   --warning: #f59e0b;
+
+  /* Glassmorphism */
+  --glass-bg: rgba(255, 255, 255, 0.75);
+  --glass-bg-strong: rgba(255, 255, 255, 0.9);
+  --glass-border: rgba(255, 255, 255, 0.4);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+
+  /* Premium Gradients */
+  --gradient-primary: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+  --gradient-secondary: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+  --gradient-premium: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --gradient-rose: linear-gradient(135deg, #f43f5e 0%, #ec4899 100%);
+
+  /* Glow Effects */
+  --glow-primary: 0 0 20px rgba(255, 107, 53, 0.4);
+  --glow-secondary: 0 0 20px rgba(78, 205, 196, 0.4);
+  --glow-rose: 0 0 20px rgba(244, 63, 94, 0.4);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -178,7 +195,149 @@ type WorldRegion =
     --foreground: #fafafa;
     --border: #2a2a2a;
     --muted: #a1a1aa;
+
+    /* Dark mode glassmorphism */
+    --glass-bg: rgba(30, 30, 30, 0.75);
+    --glass-bg-strong: rgba(30, 30, 30, 0.9);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   }
+}
+```
+
+### Glassmorphism Utility Classes
+
+The app uses a premium glassmorphism design system. Key utility classes:
+
+```css
+/* Glass backgrounds */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+.glass-card {
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+.glass-strong {
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(24px);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+}
+
+/* Gradient buttons */
+.btn-gradient {
+  background: var(--gradient-primary);
+  color: white;
+  font-weight: 600;
+}
+
+.btn-gradient-secondary {
+  background: var(--gradient-secondary);
+  color: white;
+}
+
+.btn-gradient-rose {
+  background: var(--gradient-rose);
+  color: white;
+}
+
+.btn-glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+}
+
+/* Glow effects */
+.shadow-glow-primary { box-shadow: var(--glow-primary); }
+.shadow-glow-secondary { box-shadow: var(--glow-secondary); }
+.shadow-glow-rose { box-shadow: var(--glow-rose); }
+
+/* Recipe card */
+.recipe-card {
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  transition: all 0.3s ease;
+}
+
+.recipe-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+}
+
+/* Difficulty badges */
+.badge-easy {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+}
+
+.badge-medium {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+}
+
+.badge-hard {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+}
+```
+
+### Premium Animations
+
+```css
+/* Fade in */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fade-in { animation: fadeIn 0.3s ease-out; }
+
+/* Slide up */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-slide-up { animation: slideUp 0.4s ease-out; }
+
+/* Scale in (for modals) */
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+.animate-scale-in { animation: scaleIn 0.2s ease-out; }
+
+/* Float (for icons) */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.animate-float { animation: float 3s ease-in-out infinite; }
+
+/* Glow pulse */
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(255, 107, 53, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(255, 107, 53, 0.6); }
+}
+.animate-glow { animation: glow 2s ease-in-out infinite; }
+
+/* Shimmer (for loading) */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
 }
 ```
 
@@ -512,11 +671,31 @@ export default function MyComponent({ title, onAction }: MyComponentProps) {
 
 ### Styling Conventions
 
-- Use Tailwind utility classes
+- Use Tailwind utility classes combined with glassmorphism utilities
 - Follow mobile-first responsive design
 - Use CSS variables for theme colors
-- Apply `transition-colors` or `transition-all` for interactions
-- Use gradients sparingly for CTAs: `bg-gradient-to-r from-amber-500 to-orange-500`
+- Apply `transition-all` for smooth interactions
+- Use glassmorphism classes for containers: `.glass`, `.glass-card`, `.glass-strong`
+- Use gradient button classes for CTAs: `.btn-gradient`, `.btn-gradient-secondary`, `.btn-gradient-rose`
+- Add glow effects on hover: `hover:shadow-glow-primary`
+
+**Common Patterns:**
+```tsx
+// Glass container
+<div className="glass rounded-xl p-4">
+
+// Premium button
+<button className="btn-gradient px-4 py-2 rounded-lg hover:shadow-glow-primary transition-all">
+
+// Glass input with focus glow
+<input className="glass border border-white/30 rounded-xl px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:shadow-glow-primary transition-all" />
+
+// Glass panel (sidebars, modals)
+<div className="glass-strong border-l border-white/20">
+
+// Difficulty badge
+<span className="badge-easy px-3 py-1 rounded-full text-xs font-semibold">Easy</span>
+```
 
 ### Animation Guidelines
 
@@ -524,8 +703,20 @@ export default function MyComponent({ title, onAction }: MyComponentProps) {
 // Fade in animation (defined in globals.css)
 <div className="animate-fade-in">
 
-// Loading bounce
-<span className="animate-bounce" style={{ animationDelay: '150ms' }}>
+// Slide up (for lists, cards)
+<div className="animate-slide-up">
+
+// Scale in (for modals)
+<div className="animate-scale-in">
+
+// Float (for decorative icons)
+<div className="animate-float">
+
+// Glow pulse (for important elements)
+<button className="animate-glow">
+
+// Loading shimmer
+<div className="animate-shimmer">
 
 // Framer Motion for complex animations
 import { motion } from 'framer-motion';
