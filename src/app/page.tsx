@@ -355,6 +355,7 @@ export default function Home() {
           }}
           onOpenMealPlanner={() => setMealPlannerOpen(true)}
           onOpenSettings={() => setSettingsOpen(true)}
+          onNewChat={handleNewSession}
         />
 
         {/* Mobile menu button */}

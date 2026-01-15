@@ -13,6 +13,7 @@ interface HeaderProps {
   onOpenTools: () => void;
   onOpenMealPlanner: () => void;
   onOpenSettings: () => void;
+  onNewChat: () => void;
 }
 
 export default function Header({
@@ -25,6 +26,7 @@ export default function Header({
   onOpenTools,
   onOpenMealPlanner,
   onOpenSettings,
+  onNewChat,
 }: HeaderProps) {
   return (
     <header
@@ -33,8 +35,12 @@ export default function Header({
     >
       <div className="max-w-6xl mx-auto px-4 py-3">
         <div className="flex items-center justify-between mb-3">
-          {/* Logo & Title */}
-          <div className="flex items-center gap-3">
+          {/* Logo & Title - Clickable to start new chat */}
+          <button
+            onClick={onNewChat}
+            className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+            title="Start New Chat"
+          >
             <div className="relative">
               <Image
                 src="/images/logo.png"
@@ -45,13 +51,13 @@ export default function Header({
               />
               <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent pointer-events-none" />
             </div>
-            <div>
+            <div className="text-left">
               <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                 RecipePilot
               </h1>
-              <p className="text-xs text-muted font-medium">Your Personal Recipe Assistant</p>
+              <p className="text-xs text-muted font-medium">Tap to start new chat</p>
             </div>
-          </div>
+          </button>
 
           {/* Action Buttons */}
           <div className="flex items-center gap-1.5">
