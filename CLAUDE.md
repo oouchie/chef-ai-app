@@ -616,11 +616,28 @@ npx cap open android
 
 ### iOS Deployment (TestFlight)
 
+**Manual Deployment:**
 1. Open `ios/App/App.xcworkspace` in Xcode
 2. Select target device/simulator
 3. Product → Archive
 4. Distribute App → App Store Connect
 5. Submit to TestFlight
+
+**CI/CD (GitHub Actions + Fastlane):**
+- Automated builds trigger on push to `main` branch
+- Fastlane handles signing, building, and TestFlight upload
+- Build number must be incremented for each TestFlight upload
+
+### iOS Versioning
+
+| Setting | Location | Purpose |
+|---------|----------|---------|
+| `MARKETING_VERSION` | project.pbxproj | App Store version (e.g., 1.0, 1.1) |
+| `CURRENT_PROJECT_VERSION` | project.pbxproj | Build number for TestFlight (must increment) |
+
+**Current versions:**
+- Marketing Version: 1.0
+- Build Number: 5
 
 ### Environment Variables
 
@@ -778,6 +795,35 @@ rm -rf .next out
 npm run build
 npx cap sync ios
 ```
+
+### Build Fails: "supabaseUrl is required"
+
+**Problem:** Next.js static export fails with Supabase initialization error
+**Solution:** The Supabase client uses lazy initialization to avoid build-time errors. If this error occurs, ensure `src/lib/supabase.ts` uses the `getSupabase()` pattern:
+```typescript
+let supabaseInstance: SupabaseClient | null = null;
+
+export function getSupabase(): SupabaseClient {
+  if (!supabaseInstance) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error('Supabase environment variables are not configured');
+    }
+    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey);
+  }
+  return supabaseInstance;
+}
+```
+
+### TestFlight Upload Fails: "bundle version must be higher"
+
+**Problem:** iOS build rejected because build number already exists
+**Solution:** Increment `CURRENT_PROJECT_VERSION` in `ios/App/App.xcodeproj/project.pbxproj`:
+```
+CURRENT_PROJECT_VERSION = 5;  // Must be higher than previous upload
+```
+Both Debug and Release configurations need to be updated.
 
 ### Voice Input Not Working
 
