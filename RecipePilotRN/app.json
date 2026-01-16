@@ -1,0 +1,69 @@
+{
+  "expo": {
+    "name": "RecipePilot",
+    "slug": "recipepilot",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "recipepilot",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1a3a8f"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.chefai2.app",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "RecipePilot needs access to your microphone for voice input when searching for recipes.",
+        "UIBackgroundModes": ["audio"]
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#1a3a8f"
+      },
+      "package": "com.chefai2.app",
+      "permissions": ["android.permission.RECORD_AUDIO", "android.permission.VIBRATE"]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-notifications",
+        {
+          "sounds": ["./assets/sounds/timer.wav"]
+        }
+      ],
+      [
+        "react-native-purchases",
+        {
+          "ios": {
+            "apiKey": "appl_xxx"
+          },
+          "android": {
+            "apiKey": "goog_xxx"
+          }
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "your-project-id"
+      }
+    }
+  }
+}
