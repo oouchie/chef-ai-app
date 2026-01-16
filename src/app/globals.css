@@ -68,6 +68,57 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
+  /* Native iOS-like behavior */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+}
+
+/* iOS-like scroll behavior */
+html {
+  scroll-behavior: smooth;
+  overscroll-behavior: none;
+}
+
+/* Prevent text selection on interactive elements for native feel */
+button, a, [role="button"] {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Native-like tap feedback */
+.tap-highlight {
+  position: relative;
+  overflow: hidden;
+}
+
+.tap-highlight::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--tap-x, 50%) var(--tap-y, 50%), rgba(255,255,255,0.3) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.15s ease-out;
+  pointer-events: none;
+}
+
+.tap-highlight:active::after {
+  opacity: 1;
+}
+
+/* Better active states for buttons */
+button:active, [role="button"]:active {
+  transform: scale(0.97);
+  transition: transform 0.1s ease-out;
+}
+
+/* Smooth momentum scrolling */
+.scroll-container {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
 }
 
 /* Custom scrollbar */

@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { WorldRegion, WORLD_REGIONS } from '@/types';
+import { hapticLight } from '@/lib/haptics';
 
 interface HeaderProps {
   selectedRegion: WorldRegion | 'all';
@@ -34,6 +35,12 @@ export default function Header({
   onNewChat,
   hasActiveTimer,
 }: HeaderProps) {
+  // Wrap handlers with haptic feedback
+  const withHaptic = (fn: () => void) => () => {
+    hapticLight();
+    fn();
+  };
+
   return (
     <header
       className="sticky top-0 z-50 glass-strong border-b border-white/20"
