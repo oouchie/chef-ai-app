@@ -738,7 +738,7 @@ npx cap open android
 
 **Current versions:**
 - Marketing Version: 1.0
-- Build Number: 12
+- Build Number: 14
 
 ### Environment Variables
 
@@ -947,6 +947,33 @@ Both Debug and Release configurations need to be updated.
 
 **Problem:** Microphone permission denied
 **Solution:** Check iOS Settings → RecipePilot → Microphone permission
+
+### Recipe Card Crashes on "View Recipe"
+
+**Problem:** App crashes when clicking "View Recipe" button
+**Cause:** Recipe from AI may have undefined `ingredients` or `instructions` arrays
+**Solution:** Recipe parsing in `src/lib/chat.ts` validates and ensures arrays exist:
+```typescript
+recipe = {
+  id: `recipe-${Date.now()}`,
+  name: recipeData.name || 'Unnamed Recipe',
+  ingredients: Array.isArray(recipeData.ingredients) ? recipeData.ingredients : [],
+  instructions: Array.isArray(recipeData.instructions) ? recipeData.instructions : [],
+  // ... other fields with defaults
+};
+```
+
+### Shopping List Shows Empty
+
+**Problem:** "Add to Shopping List" doesn't show ingredients
+**Cause:** Recipe may not have ingredients array populated
+**Solution:** `page.tsx` validates ingredients before opening selector:
+```typescript
+if (!recipe.ingredients || recipe.ingredients.length === 0) {
+  showToast('No ingredients found for this recipe', 'warning');
+  return;
+}
+```
 
 ---
 
