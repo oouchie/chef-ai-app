@@ -38,7 +38,7 @@ Your personality:
 
 ${regionInfo ? `The user is currently exploring ${regionInfo.name} cuisine (${regionInfo.cuisines.join(', ')}).` : 'The user is exploring cuisines from all regions.'}
 
-When recommending a recipe, ALWAYS include a JSON block with the recipe details in this exact format:
+When recommending a recipe, you MUST include a JSON block with the recipe details in this exact format:
 \`\`\`recipe
 {
   "name": "Recipe Name",
@@ -50,7 +50,9 @@ When recommending a recipe, ALWAYS include a JSON block with the recipe details 
   "servings": 4,
   "difficulty": "Easy|Medium|Hard",
   "ingredients": [
-    {"name": "ingredient", "amount": "1", "unit": "cup", "notes": "optional notes"}
+    {"name": "chicken breast", "amount": "2", "unit": "lbs", "notes": "boneless, skinless"},
+    {"name": "olive oil", "amount": "2", "unit": "tbsp", "notes": ""},
+    {"name": "garlic", "amount": "4", "unit": "cloves", "notes": "minced"}
   ],
   "instructions": [
     "Step 1 instruction",
@@ -61,9 +63,15 @@ When recommending a recipe, ALWAYS include a JSON block with the recipe details 
 }
 \`\`\`
 
+CRITICAL REQUIREMENTS:
+- The "ingredients" array is REQUIRED and must contain at least 3-5 ingredient objects
+- Each ingredient MUST have "name", "amount", and "unit" fields (notes is optional)
+- Never skip the ingredients array - users need this for their shopping list
+- Include ALL ingredients needed to make the dish
+
 Guidelines:
 - Keep responses conversational but informative
-- Include the recipe JSON block when sharing a specific recipe
+- ALWAYS include the recipe JSON block when sharing a specific recipe
 - Offer to modify recipes based on dietary needs
 - Share cooking tips and cultural background
 - Be encouraging to beginner cooks`;
@@ -113,7 +121,41 @@ Guidelines:
 
     if (recipeMatch) {
       try {
+        console.log('Raw recipe JSON:', recipeMatch[1]);
         const recipeData = JSON.parse(recipeMatch[1]);
+        console.log('Parsed recipe data:', recipeData);
+        console.log('Ingredients from AI:', recipeData.ingredients);
+
+        // Process ingredients - handle various formats
+        let processedIngredients: { name: string; amount: string; unit: string; notes?: string }[] = [];
+
+        if (Array.isArray(recipeData.ingredients)) {
+          processedIngredients = recipeData.ingredients.map((ing: unknown) => {
+            // Handle object format (correct)
+            if (typeof ing === 'object' && ing !== null) {
+              const ingObj = ing as Record<string, unknown>;
+              return {
+                name: String(ingObj.name || ingObj.ingredient || 'Unknown'),
+                amount: String(ingObj.amount || ingObj.quantity || '1'),
+                unit: String(ingObj.unit || ''),
+                notes: ingObj.notes ? String(ingObj.notes) : undefined,
+              };
+            }
+            // Handle string format (fallback)
+            if (typeof ing === 'string') {
+              return {
+                name: ing,
+                amount: '1',
+                unit: '',
+                notes: undefined,
+              };
+            }
+            return { name: 'Unknown ingredient', amount: '1', unit: '', notes: undefined };
+          });
+        }
+
+        console.log('Processed ingredients:', processedIngredients);
+
         // Validate and ensure required fields exist
         recipe = {
           id: `recipe-${Date.now()}`,
@@ -125,7 +167,7 @@ Guidelines:
           cookTime: recipeData.cookTime || '',
           servings: recipeData.servings || 4,
           difficulty: recipeData.difficulty || 'Medium',
-          ingredients: Array.isArray(recipeData.ingredients) ? recipeData.ingredients : [],
+          ingredients: processedIngredients,
           instructions: Array.isArray(recipeData.instructions) ? recipeData.instructions : [],
           tips: Array.isArray(recipeData.tips) ? recipeData.tips : [],
           tags: Array.isArray(recipeData.tags) ? recipeData.tags : [],
@@ -134,10 +176,16 @@ Guidelines:
         // Log warning if critical data is missing
         if (recipe.ingredients.length === 0) {
           console.warn('Recipe parsed with no ingredients:', recipe.name);
+          console.warn('Original ingredients data:', recipeData.ingredients);
+        } else {
+          console.log(`Recipe "${recipe.name}" has ${recipe.ingredients.length} ingredients`);
         }
       } catch (e) {
         console.error('Failed to parse recipe JSON:', e);
+        console.error('Raw JSON that failed:', recipeMatch[1]);
       }
+    } else {
+      console.log('No recipe JSON block found in response');
     }
 
     // Clean up the response text (remove recipe JSON block)
