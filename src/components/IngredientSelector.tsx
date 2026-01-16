@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Recipe, Ingredient } from '@/types';
 
 interface IngredientSelectorProps {
@@ -20,6 +20,13 @@ export default function IngredientSelector({
   const [selected, setSelected] = useState<Set<number>>(
     new Set(recipe.ingredients?.map((_, i) => i) || [])
   );
+
+  // Reset selection when recipe changes or modal opens
+  useEffect(() => {
+    if (isOpen && recipe.ingredients) {
+      setSelected(new Set(recipe.ingredients.map((_, i) => i)));
+    }
+  }, [recipe.id, isOpen]);
 
   const toggleIngredient = (index: number) => {
     setSelected((prev) => {
