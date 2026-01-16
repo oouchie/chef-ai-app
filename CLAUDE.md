@@ -738,7 +738,7 @@ npx cap open android
 
 **Current versions:**
 - Marketing Version: 1.0
-- Build Number: 14
+- Build Number: 17
 
 ### Environment Variables
 
@@ -966,14 +966,15 @@ recipe = {
 ### Shopping List Shows Empty
 
 **Problem:** "Add to Shopping List" doesn't show ingredients
-**Cause:** Recipe may not have ingredients array populated
-**Solution:** `page.tsx` validates ingredients before opening selector:
-```typescript
-if (!recipe.ingredients || recipe.ingredients.length === 0) {
-  showToast('No ingredients found for this recipe', 'warning');
-  return;
-}
-```
+**Cause:** Recipe parsing happens in Supabase Edge Function, not client code
+**Solution:** The Edge Function (`supabase/functions/chat/index.ts`) must:
+1. Include CRITICAL REQUIREMENTS in system prompt emphasizing ingredients are mandatory
+2. Validate and process ingredients array with proper defaults
+3. Handle various ingredient formats (objects with name/amount/unit, or strings)
+
+After fixing, redeploy: `npx supabase functions deploy chat`
+
+**Important:** Recipe parsing happens server-side in the Edge Function. Client-side code in `chat.ts` is only used as fallback when Supabase fails.
 
 ---
 
