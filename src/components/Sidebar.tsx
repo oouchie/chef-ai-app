@@ -171,7 +171,18 @@ export default function Sidebar({
         {/* Footer */}
         <div className="p-4 border-t border-white/10 bg-gradient-to-r from-primary/5 via-transparent to-accent/5">
           <p className="text-xs text-center text-muted">
-            Powered by <span className="font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">RecipePilot</span>
+            Powered by{' '}
+            <a
+              href="https://1865freemoney.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent hover:underline"
+            >
+              1865 Free Money
+            </a>
+          </p>
+          <p className="text-xs text-center text-muted/70 mt-1">
+            Digital Excellence
           </p>
         </div>
       </aside>
