@@ -84,10 +84,10 @@ export default function Header({
             <button
               onClick={onOpenTodos}
               className="btn-glass flex items-center gap-2 px-3 py-2 rounded-xl"
-              title="Cooking Tasks"
+              title="Shopping List"
             >
-              <span className="text-lg">✅</span>
-              <span className="hidden sm:inline text-sm font-medium">Tasks</span>
+              <span className="text-lg">🛒</span>
+              <span className="hidden sm:inline text-sm font-medium">List</span>
               {todosCount > 0 && (
                 <span className="bg-gradient-to-r from-secondary to-teal-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold shadow-sm">
                   {todosCount}
