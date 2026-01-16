@@ -114,12 +114,29 @@ Guidelines:
     if (recipeMatch) {
       try {
         const recipeData = JSON.parse(recipeMatch[1]);
+        // Validate and ensure required fields exist
         recipe = {
           id: `recipe-${Date.now()}`,
-          ...recipeData,
+          name: recipeData.name || 'Unnamed Recipe',
+          region: recipeData.region || 'european',
+          cuisine: recipeData.cuisine || 'International',
+          description: recipeData.description || '',
+          prepTime: recipeData.prepTime || '',
+          cookTime: recipeData.cookTime || '',
+          servings: recipeData.servings || 4,
+          difficulty: recipeData.difficulty || 'Medium',
+          ingredients: Array.isArray(recipeData.ingredients) ? recipeData.ingredients : [],
+          instructions: Array.isArray(recipeData.instructions) ? recipeData.instructions : [],
+          tips: Array.isArray(recipeData.tips) ? recipeData.tips : [],
+          tags: Array.isArray(recipeData.tags) ? recipeData.tags : [],
         };
-      } catch {
-        console.error('Failed to parse recipe JSON');
+
+        // Log warning if critical data is missing
+        if (recipe.ingredients.length === 0) {
+          console.warn('Recipe parsed with no ingredients:', recipe.name);
+        }
+      } catch (e) {
+        console.error('Failed to parse recipe JSON:', e);
       }
     }
 

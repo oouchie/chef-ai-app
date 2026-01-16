@@ -384,10 +384,15 @@ export default function Home() {
   }, [showToast]);
 
   const handleAddToShoppingList = useCallback((recipe: Recipe) => {
-    // Open ingredient selector instead of adding all directly
+    // Check if recipe has ingredients
+    if (!recipe.ingredients || recipe.ingredients.length === 0) {
+      showToast('No ingredients found for this recipe', 'warning');
+      return;
+    }
+    // Open ingredient selector
     setSelectedRecipeForShopping(recipe);
     setIngredientSelectorOpen(true);
-  }, []);
+  }, [showToast]);
 
   const handleAddSelectedIngredients = useCallback((ingredients: Ingredient[]) => {
     if (!selectedRecipeForShopping) return;
