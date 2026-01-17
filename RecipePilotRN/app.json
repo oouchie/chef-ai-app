@@ -16,7 +16,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.chefai2.app",
-      "buildNumber": "28",
+      "buildNumber": "29",
       "infoPlist": {
         "NSMicrophoneUsageDescription": "RecipePilot needs access to your microphone for voice input when searching for recipes.",
         "UIBackgroundModes": [
