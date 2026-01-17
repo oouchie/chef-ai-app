@@ -83,14 +83,16 @@ export default function Header({
             },
           ]}
         >
-          {/* Left: Menu Button */}
-          <TouchableOpacity
-            style={styles.iconButton}
-            onPress={onMenuPress}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Feather name="menu" size={24} color={colors.foreground} />
-          </TouchableOpacity>
+          {/* Left: Menu Button - fixed width for balance */}
+          <View style={styles.leftButtons}>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={onMenuPress}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Feather name="menu" size={24} color={colors.foreground} />
+            </TouchableOpacity>
+          </View>
 
           {/* Center: Logo and Region */}
           <TouchableOpacity style={styles.titleContainer} onPress={toggleRegions}>
@@ -111,7 +113,7 @@ export default function Header({
             </View>
           </TouchableOpacity>
 
-          {/* Right: Action Buttons */}
+          {/* Right: Action Buttons - fixed width for balance */}
           <View style={styles.rightButtons}>
             <TouchableOpacity
               style={styles.iconButton}
@@ -252,8 +254,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingVertical: 12,
+  },
+  leftButtons: {
+    width: 80,
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
   },
   iconButton: {
     padding: 8,
@@ -261,7 +268,6 @@ const styles = StyleSheet.create({
   titleContainer: {
     alignItems: 'center',
     flex: 1,
-    marginHorizontal: 16,
   },
   logoRow: {
     flexDirection: 'row',
@@ -287,7 +293,9 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   rightButtons: {
+    width: 80,
     flexDirection: 'row',
+    justifyContent: 'flex-end',
     gap: 4,
   },
   regionChipsWrapper: {
@@ -310,9 +318,9 @@ const styles = StyleSheet.create({
   },
   regionChipActive: {
     elevation: 2,
-    shadowColor: '#ff6b35',
+    shadowColor: '#1a3a8f',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.25,
     shadowRadius: 4,
   },
   regionChipFlag: {

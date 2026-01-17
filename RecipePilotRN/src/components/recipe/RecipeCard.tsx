@@ -3,17 +3,16 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
+  Pressable,
   ScrollView,
   useColorScheme,
   LayoutAnimation,
   Platform,
   UIManager,
 } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
-import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, SlideInRight } from 'react-native-reanimated';
 
 import { Colors, Gradients, Shadows } from '@/theme';
 import { Recipe, Ingredient, WORLD_REGIONS } from '@/types';
@@ -93,10 +92,12 @@ export default function RecipeCard({
       ]}
     >
       {/* Header */}
-      <TouchableOpacity
-        style={styles.header}
+      <Pressable
+        style={({ pressed }) => [
+          styles.header,
+          { opacity: pressed ? 0.8 : 1 },
+        ]}
         onPress={handleToggleExpand}
-        activeOpacity={0.8}
       >
         <View style={styles.headerContent}>
           <View style={styles.titleRow}>
@@ -150,7 +151,7 @@ export default function RecipeCard({
             {recipe.description}
           </Text>
         </View>
-      </TouchableOpacity>
+      </Pressable>
 
       {/* Expanded Content */}
       {isExpanded && (
@@ -158,14 +159,15 @@ export default function RecipeCard({
           {/* Tabs */}
           <View style={[styles.tabs, { borderBottomColor: colors.border }]}>
             {(['ingredients', 'instructions', 'tips'] as TabType[]).map((tab) => (
-              <TouchableOpacity
+              <Pressable
                 key={tab}
-                style={[
+                style={({ pressed }) => [
                   styles.tab,
                   activeTab === tab && {
                     borderBottomColor: colors.primary,
                     borderBottomWidth: 2,
                   },
+                  { opacity: pressed ? 0.7 : 1 },
                 ]}
                 onPress={() => handleTabChange(tab)}
               >
@@ -177,7 +179,7 @@ export default function RecipeCard({
                 >
                   {tab.charAt(0).toUpperCase() + tab.slice(1)}
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
 
@@ -243,10 +245,13 @@ export default function RecipeCard({
 
       {/* Action Buttons */}
       <View style={[styles.actions, { borderTopColor: colors.border }]}>
-        <TouchableOpacity
-          style={[
+        <Pressable
+          style={({ pressed }) => [
             styles.actionButton,
-            { backgroundColor: isSaved ? colors.primary + '20' : colors.glassBackground },
+            {
+              backgroundColor: isSaved ? colors.primary + '20' : colors.glassBackground,
+              transform: [{ scale: pressed ? 0.96 : 1 }],
+            },
           ]}
           onPress={handleSave}
         >
@@ -263,17 +268,23 @@ export default function RecipeCard({
           >
             {isSaved ? 'Saved' : 'Save'}
           </Text>
-        </TouchableOpacity>
+        </Pressable>
 
-        <TouchableOpacity
-          style={[styles.actionButton, { backgroundColor: colors.secondary + '20' }]}
+        <Pressable
+          style={({ pressed }) => [
+            styles.actionButton,
+            {
+              backgroundColor: colors.secondary + '20',
+              transform: [{ scale: pressed ? 0.96 : 1 }],
+            },
+          ]}
           onPress={handleAddToShoppingList}
         >
           <Feather name="shopping-cart" size={20} color={colors.secondary} />
           <Text style={[styles.actionText, { color: colors.secondary }]}>
             Shopping List
           </Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     </Animated.View>
   );

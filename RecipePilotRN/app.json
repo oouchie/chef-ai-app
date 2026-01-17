@@ -18,7 +18,10 @@
       "bundleIdentifier": "com.chefai2.app",
       "infoPlist": {
         "NSMicrophoneUsageDescription": "RecipePilot needs access to your microphone for voice input when searching for recipes.",
-        "UIBackgroundModes": ["audio"]
+        "UIBackgroundModes": [
+          "audio"
+        ],
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -27,7 +30,10 @@
         "backgroundColor": "#1a3a8f"
       },
       "package": "com.chefai2.app",
-      "permissions": ["android.permission.RECORD_AUDIO", "android.permission.VIBRATE"]
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.VIBRATE"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -39,18 +45,7 @@
       [
         "expo-notifications",
         {
-          "sounds": ["./assets/sounds/timer.wav"]
-        }
-      ],
-      [
-        "react-native-purchases",
-        {
-          "ios": {
-            "apiKey": "appl_xxx"
-          },
-          "android": {
-            "apiKey": "goog_xxx"
-          }
+          "sounds": []
         }
       ]
     ],
@@ -62,8 +57,9 @@
         "origin": false
       },
       "eas": {
-        "projectId": "your-project-id"
+        "projectId": "8a3aeaf7-422b-4c08-b11b-affa50ee371f"
       }
-    }
+    },
+    "owner": "oouchie"
   }
 }

@@ -64,10 +64,10 @@ export const Shadows = {
   // Glow effects (iOS only, Android uses elevation)
   glowPrimary: Platform.select({
     ios: {
-      shadowColor: '#ff6b35',
+      shadowColor: '#1a3a8f',
       shadowOffset: { width: 0, height: 0 },
-      shadowOpacity: 0.35,
-      shadowRadius: 15,
+      shadowOpacity: 0.4,
+      shadowRadius: 12,
     },
     default: {
       elevation: 6,
@@ -76,10 +76,10 @@ export const Shadows = {
 
   glowSecondary: Platform.select({
     ios: {
-      shadowColor: '#4ecdc4',
+      shadowColor: '#f97316',
       shadowOffset: { width: 0, height: 0 },
       shadowOpacity: 0.35,
-      shadowRadius: 15,
+      shadowRadius: 12,
     },
     default: {
       elevation: 6,
@@ -88,10 +88,10 @@ export const Shadows = {
 
   glowRose: Platform.select({
     ios: {
-      shadowColor: '#f43f5e',
+      shadowColor: '#ef4444',
       shadowOffset: { width: 0, height: 0 },
       shadowOpacity: 0.35,
-      shadowRadius: 15,
+      shadowRadius: 12,
     },
     default: {
       elevation: 6,

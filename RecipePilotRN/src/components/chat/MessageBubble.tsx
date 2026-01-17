@@ -1,15 +1,23 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   useColorScheme,
-  Image,
   Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
-import Animated, { FadeInUp } from 'react-native-reanimated';
+import Animated, {
+  FadeInUp,
+  FadeInDown,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+  withDelay,
+} from 'react-native-reanimated';
 
 import { Colors, Gradients, Shadows } from '@/theme';
 import { Message, Recipe } from '@/types';
@@ -29,7 +37,7 @@ export default function MessageBubble({ message, renderRecipeCard }: MessageBubb
   if (isUser) {
     return (
       <Animated.View
-        entering={FadeInUp.duration(300)}
+        entering={FadeInUp.springify().damping(20).stiffness(90)}
         style={[styles.container, styles.userContainer]}
       >
         <LinearGradient
@@ -47,7 +55,7 @@ export default function MessageBubble({ message, renderRecipeCard }: MessageBubb
   // Assistant message
   return (
     <Animated.View
-      entering={FadeInUp.duration(300)}
+      entering={FadeInUp.springify().damping(20).stiffness(90)}
       style={[styles.container, styles.assistantContainer]}
     >
       <View
@@ -57,13 +65,14 @@ export default function MessageBubble({ message, renderRecipeCard }: MessageBubb
           {
             backgroundColor: colors.glassBackgroundStrong,
             borderColor: colors.glassBorder,
+            borderLeftColor: colors.primary,
           },
           Shadows.glassCard,
         ]}
       >
         {Platform.OS === 'ios' && (
           <BlurView
-            intensity={20}
+            intensity={25}
             tint={isDark ? 'dark' : 'light'}
             style={StyleSheet.absoluteFill}
           />
@@ -71,9 +80,14 @@ export default function MessageBubble({ message, renderRecipeCard }: MessageBubb
 
         {/* Header with avatar */}
         <View style={[styles.header, { borderBottomColor: colors.border }]}>
-          <View style={[styles.avatar, { backgroundColor: colors.primary + '20' }]}>
+          <LinearGradient
+            colors={Gradients.primary}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.avatarGradient}
+          >
             <Text style={styles.avatarEmoji}>👨‍🍳</Text>
-          </View>
+          </LinearGradient>
           <Text style={[styles.assistantName, { color: colors.primary }]}>
             RecipePilot
           </Text>
@@ -95,6 +109,48 @@ export default function MessageBubble({ message, renderRecipeCard }: MessageBubb
   );
 }
 
+// Animated dot component for loading
+function AnimatedDot({ delay, color }: { delay: number; color: string }) {
+  const scale = useSharedValue(1);
+  const opacity = useSharedValue(0.4);
+
+  useEffect(() => {
+    scale.value = withDelay(
+      delay,
+      withRepeat(
+        withSequence(
+          withTiming(1.3, { duration: 300 }),
+          withTiming(1, { duration: 300 })
+        ),
+        -1,
+        false
+      )
+    );
+    opacity.value = withDelay(
+      delay,
+      withRepeat(
+        withSequence(
+          withTiming(1, { duration: 300 }),
+          withTiming(0.4, { duration: 300 })
+        ),
+        -1,
+        false
+      )
+    );
+  }, []);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
+  }));
+
+  return (
+    <Animated.View
+      style={[styles.dot, { backgroundColor: color }, animatedStyle]}
+    />
+  );
+}
+
 // Loading bubble component
 export function LoadingBubble() {
   const colorScheme = useColorScheme();
@@ -103,7 +159,7 @@ export function LoadingBubble() {
 
   return (
     <Animated.View
-      entering={FadeInUp.duration(300)}
+      entering={FadeInUp.springify().damping(20).stiffness(90)}
       style={[styles.container, styles.assistantContainer]}
     >
       <View
@@ -113,14 +169,28 @@ export function LoadingBubble() {
           {
             backgroundColor: colors.glassBackgroundStrong,
             borderColor: colors.glassBorder,
+            borderLeftColor: colors.primary,
           },
           Shadows.glassCard,
         ]}
       >
+        {Platform.OS === 'ios' && (
+          <BlurView
+            intensity={25}
+            tint={isDark ? 'dark' : 'light'}
+            style={StyleSheet.absoluteFill}
+          />
+        )}
+
         <View style={[styles.header, { borderBottomColor: colors.border }]}>
-          <View style={[styles.avatar, { backgroundColor: colors.primary + '20' }]}>
+          <LinearGradient
+            colors={Gradients.primary}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.avatarGradient}
+          >
             <Text style={styles.avatarEmoji}>👨‍🍳</Text>
-          </View>
+          </LinearGradient>
           <Text style={[styles.assistantName, { color: colors.primary }]}>
             RecipePilot
           </Text>
@@ -128,24 +198,9 @@ export function LoadingBubble() {
 
         <View style={styles.loadingContainer}>
           <View style={styles.dotsContainer}>
-            <Animated.View
-              style={[
-                styles.dot,
-                { backgroundColor: colors.primary },
-              ]}
-            />
-            <Animated.View
-              style={[
-                styles.dot,
-                { backgroundColor: colors.accent },
-              ]}
-            />
-            <Animated.View
-              style={[
-                styles.dot,
-                { backgroundColor: colors.secondary },
-              ]}
-            />
+            <AnimatedDot delay={0} color={colors.primary} />
+            <AnimatedDot delay={150} color={colors.primaryLight || colors.primary} />
+            <AnimatedDot delay={300} color={colors.secondary} />
           </View>
           <Text style={[styles.loadingText, { color: colors.muted }]}>
             Cooking up something delicious...
@@ -180,26 +235,26 @@ const styles = StyleSheet.create({
   assistantBubble: {
     borderWidth: 1,
     borderLeftWidth: 3,
-    borderLeftColor: '#ff6b35',
     borderBottomLeftRadius: 6,
   },
   userText: {
     color: 'white',
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '500',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
     paddingBottom: 10,
-    borderBottomWidth: 1,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     gap: 10,
   },
-  avatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  avatarGradient: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
   },

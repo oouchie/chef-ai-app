@@ -3,18 +3,22 @@ import {
   View,
   StyleSheet,
   FlatList,
-  KeyboardAvoidingView,
   Platform,
   TextInput,
-  TouchableOpacity,
   Text,
   useColorScheme,
   Keyboard,
+  Pressable,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { Feather } from '@expo/vector-icons';
-import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
+import Animated, {
+  FadeInUp,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { Colors, Gradients, Shadows } from '@/theme';
@@ -202,12 +206,13 @@ export default function ChatInterface({
             </View>
 
             {/* Voice Button */}
-            <TouchableOpacity
-              style={[
+            <Pressable
+              style={({ pressed }) => [
                 styles.voiceButton,
                 {
                   backgroundColor: isPremium ? colors.primary : colors.glassBackground,
                   borderColor: colors.glassBorder,
+                  transform: [{ scale: pressed ? 0.92 : 1 }],
                 },
               ]}
               onPress={handleVoiceInput}
@@ -219,19 +224,21 @@ export default function ChatInterface({
                 color={isPremium ? 'white' : colors.muted}
               />
               {!isPremium && (
-                <View style={styles.premiumIndicator}>
+                <View style={[styles.premiumIndicator, { backgroundColor: colors.secondary }]}>
                   <Text style={styles.premiumStar}>⭐</Text>
                 </View>
               )}
-            </TouchableOpacity>
+            </Pressable>
 
             {/* Send Button */}
-            <TouchableOpacity
+            <Pressable
               onPress={handleSend}
               disabled={!input.trim() || isLoading}
-              style={[
+              style={({ pressed }) => [
                 styles.sendButton,
                 (!input.trim() || isLoading) && styles.sendButtonDisabled,
+                input.trim() && !isLoading && Shadows.glowPrimary,
+                { transform: [{ scale: pressed && input.trim() ? 0.92 : 1 }] },
               ]}
             >
               <LinearGradient
@@ -242,7 +249,7 @@ export default function ChatInterface({
               >
                 <Feather name="send" size={20} color="white" />
               </LinearGradient>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
       </Animated.View>
@@ -317,7 +324,6 @@ const styles = StyleSheet.create({
     width: 18,
     height: 18,
     borderRadius: 9,
-    backgroundColor: '#f7931e',
     alignItems: 'center',
     justifyContent: 'center',
   },
