@@ -5,7 +5,6 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useColorScheme, View, Text, ScrollView, StyleSheet } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
-import { useFonts } from 'expo-font';
 
 import { AppStateProvider } from '@/providers/AppStateProvider';
 import { ThemeProvider } from '@/providers/ThemeProvider';
@@ -83,20 +82,10 @@ export default function RootLayout() {
   const isDark = colorScheme === 'dark';
   const colors = isDark ? Colors.dark : Colors.light;
 
-  // Load any custom fonts here
-  const [fontsLoaded] = useFonts({
-    // Add custom fonts if needed
-  });
-
+  // Hide splash screen on mount
   useEffect(() => {
-    if (fontsLoaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded]);
-
-  if (!fontsLoaded) {
-    return null;
-  }
+    SplashScreen.hideAsync();
+  }, []);
 
   return (
     <ErrorBoundary>

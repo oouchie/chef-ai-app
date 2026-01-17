@@ -129,6 +129,9 @@ export default function ChatScreen() {
 
   const savedRecipeIds = state.savedRecipes.map((r) => r.id);
 
+  // Debug: Log to see if component renders
+  console.log('ChatScreen rendering, messages:', messages.length, 'region:', state.selectedRegion);
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Sidebar */}
