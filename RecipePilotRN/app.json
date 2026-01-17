@@ -47,14 +47,6 @@
         {
           "sounds": []
         }
-      ],
-      [
-        "react-native-purchases",
-        {
-          "ios": {
-            "usesStoreKit2JWS": false
-          }
-        }
       ]
     ],
     "experiments": {
