@@ -1,11 +1,8 @@
 import React from 'react';
-import { View, ViewStyle, StyleSheet, Platform } from 'react-native';
+import { View, ViewStyle, StyleSheet, Platform, StyleProp } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useColorScheme } from 'react-native';
 import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
   FadeIn,
   FadeInDown,
   FadeInUp,
@@ -17,7 +14,7 @@ type GlassIntensity = 'light' | 'medium' | 'strong';
 interface GlassViewProps {
   children: React.ReactNode;
   intensity?: GlassIntensity;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   borderRadius?: number;
   animated?: boolean;
   animationType?: 'fade' | 'slideUp' | 'slideDown';
@@ -53,13 +50,14 @@ export default function GlassView({
     ? 'rgba(255, 255, 255, 0.1)'
     : 'rgba(255, 255, 255, 0.4)';
 
+  const flatStyle = StyleSheet.flatten(style) || {};
   const containerStyle: ViewStyle = {
     borderRadius,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor,
     ...Shadows.glass,
-    ...style,
+    ...flatStyle,
   };
 
   const enteringAnimation = animated
@@ -105,10 +103,11 @@ export function GlassCard({
   onPress,
   ...props
 }: GlassViewProps & { onPress?: () => void }) {
+  const flatStyle = StyleSheet.flatten([{ padding: 16 }, style]);
   return (
     <GlassView
       intensity="strong"
-      style={[{ padding: 16 }, style]}
+      style={flatStyle}
       {...props}
     >
       {children}

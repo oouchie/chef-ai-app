@@ -110,10 +110,10 @@ export default function GlassInput({
             style={[
               styles.input,
               { color: colors.foreground },
-              icon && styles.inputWithLeftIcon,
-              rightIcon && styles.inputWithRightIcon,
+              icon ? styles.inputWithLeftIcon : undefined,
+              rightIcon ? styles.inputWithRightIcon : undefined,
               style,
-            ]}
+            ].filter(Boolean)}
             placeholderTextColor={colors.muted}
             onFocus={handleFocus}
             onBlur={handleBlur}
