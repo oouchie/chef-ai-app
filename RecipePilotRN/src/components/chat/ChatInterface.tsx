@@ -90,8 +90,8 @@ export default function ChatInterface({
       onShowPaywall?.();
       return;
     }
-    // TODO: Implement voice input
-    console.log('Voice input pressed');
+    // Voice input - requires native implementation
+    hapticLight();
   }, [isPremium, onShowPaywall]);
 
   const renderRecipeCard = useCallback(

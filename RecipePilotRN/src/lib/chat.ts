@@ -14,15 +14,9 @@ export async function sendChatMessage(
   conversationHistory: { role: string; content: string }[],
   apiKey?: string
 ): Promise<ChatResponse> {
-  console.log('========== CHAT FUNCTION CALLED ==========');
-  console.log('Message:', message);
-  console.log('Region:', region);
-  console.log('Has API Key:', !!apiKey);
-
   // If no API key, use demo mode
   if (!apiKey) {
     const demoRecipe = generateDemoRecipe(message, region);
-    console.log('DEMO MODE - Recipe generated:', demoRecipe?.name);
     return {
       response: generateDemoResponse(message, region),
       recipe: demoRecipe,

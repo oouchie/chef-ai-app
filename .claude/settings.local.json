@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build:*)",
+      "Bash(if exist node_modules rmdir /s /q node_modules)",
+      "Bash(if exist package-lock.json del package-lock.json)",
+      "Bash(npm cache clean:*)",
+      "Bash(npm install)",
+      "Bash(npx expo start)",
+      "Bash(npm install:*)",
+      "Bash(ls -la \"C:\\\\Users\\\\oouch\\\\App Projects\\\\recipe-chatbot\\\\public\\\\images\"\" 2>/dev/null || ls -la \"C:UsersoouchApp Projectsrecipe-chatbotpublic\"\")",
+      "Bash(npx expo install:*)",
+      "Bash(node --version:*)",
+      "Bash(npx expo start --clear)",
+      "Bash(npx expo start:*)",
+      "Bash(curl:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(npx eas:*)",
+      "Bash(git restore:*)",
+      "Bash(dir \"C:\\\\Users\\\\oouch\\\\App Projects\\\\recipe-chatbot\\\\ios\\\\App\\\\App\\\\Assets.xcassets\\\\AppIcon.appiconset\")",
+      "Bash(copy \"C:\\\\Users\\\\oouch\\\\App Projects\\\\recipe-chatbot\\\\RecipePilotRN\\\\assets\\\\images\\\\icon.png\" \"C:\\\\Users\\\\oouch\\\\App Projects\\\\recipe-chatbot\\\\ios\\\\App\\\\App\\\\Assets.xcassets\\\\AppIcon.appiconset\\\\icon.png\" /Y)",
+      "Bash(copy:*)"
+    ]
+  }
+}
