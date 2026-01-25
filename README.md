@@ -167,7 +167,7 @@ RecipePilotRN/
 ## Version
 
 - **App Version:** 1.0.0
-- **Build Number:** 46
+- **Build Number:** 47
 - **Bundle ID:** com.chefai2.app
 
 ## License
