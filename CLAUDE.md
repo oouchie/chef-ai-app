@@ -7,7 +7,7 @@
 **Description:** AI-powered recipe discovery, meal planning, and step-by-step cooking assistant
 **Target Platform:** iOS 15.0+ (iPhone and iPad), Android
 **Distribution:** Apple App Store, Google Play Store
-**Current Build:** 47
+**Current Build:** 48
 
 ---
 
