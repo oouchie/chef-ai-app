@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,11 +11,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 
-import { Colors } from '@/theme';
+import { Colors, Gradients } from '@/theme';
 import { useAppState } from '@/providers/AppStateProvider';
 import { useToast } from '@/components/Toast';
 import { hapticLight } from '@/lib/haptics';
+import { purchaseService } from '@/lib/purchases';
 import { GlassView, GradientButton } from '@/components/ui';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -37,6 +39,23 @@ export default function MealPlannerModal() {
 
   const [mealPlan, setMealPlan] = useState<Record<string, Record<string, string | undefined>>>({});
   const [selectedSlot, setSelectedSlot] = useState<MealSlot | null>(null);
+  const [isPremium, setIsPremium] = useState(false);
+  const [isCheckingPremium, setIsCheckingPremium] = useState(true);
+
+  // Check premium status on mount
+  useEffect(() => {
+    const checkPremium = async () => {
+      try {
+        const status = await purchaseService.getSubscriptionStatus();
+        setIsPremium(status.isPremium);
+      } catch (error) {
+        console.warn('Failed to check premium status:', error);
+      } finally {
+        setIsCheckingPremium(false);
+      }
+    };
+    checkPremium();
+  }, []);
 
   const handleSlotPress = useCallback((day: string, meal: typeof MEAL_TYPES[number]) => {
     hapticLight();
@@ -68,6 +87,80 @@ export default function MealPlannerModal() {
       },
     }));
   }, []);
+
+  // Premium gate - show upgrade prompt for non-premium users
+  if (!isCheckingPremium && !isPremium) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        {/* Header */}
+        <GlassView
+          intensity="strong"
+          style={[styles.header, { paddingTop: insets.top + 10 }]}
+          borderRadius={0}
+        >
+          <View style={styles.headerRow}>
+            <Text style={[styles.headerTitle, { color: colors.foreground }]}>
+              Meal Planner
+            </Text>
+            <TouchableOpacity onPress={() => router.back()}>
+              <Feather name="x" size={24} color={colors.muted} />
+            </TouchableOpacity>
+          </View>
+        </GlassView>
+
+        {/* Premium Gate Content */}
+        <View style={styles.premiumGateContainer}>
+          <LinearGradient
+            colors={Gradients.premium}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.premiumGateIcon}
+          >
+            <Feather name="lock" size={32} color="white" />
+          </LinearGradient>
+
+          <Text style={[styles.premiumGateTitle, { color: colors.foreground }]}>
+            Premium Feature
+          </Text>
+          <Text style={[styles.premiumGateSubtitle, { color: colors.muted }]}>
+            Meal planning is available exclusively for premium members. Upgrade to plan
+            your weekly meals and generate shopping lists automatically.
+          </Text>
+
+          <View style={styles.premiumFeatures}>
+            {[
+              'Weekly meal calendar',
+              'Drag & drop scheduling',
+              'Auto shopping lists',
+              'Nutritional insights',
+            ].map((feature, index) => (
+              <View key={index} style={styles.premiumFeatureRow}>
+                <Feather name="check-circle" size={18} color={colors.success} />
+                <Text style={[styles.premiumFeatureText, { color: colors.foreground }]}>
+                  {feature}
+                </Text>
+              </View>
+            ))}
+          </View>
+
+          <GradientButton
+            title="Upgrade to Premium"
+            onPress={() => router.push('/(modals)/paywall')}
+            variant="premium"
+            size="lg"
+            fullWidth
+          />
+
+          <TouchableOpacity
+            style={styles.cancelButton}
+            onPress={() => router.back()}
+          >
+            <Text style={[styles.cancelText, { color: colors.muted }]}>Maybe Later</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -359,5 +452,47 @@ const styles = StyleSheet.create({
   },
   instructionText: {
     fontSize: 14,
+  },
+  // Premium gate styles
+  premiumGateContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+  },
+  premiumGateIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  premiumGateTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  premiumGateSubtitle: {
+    fontSize: 15,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 24,
+    maxWidth: 320,
+  },
+  premiumFeatures: {
+    alignSelf: 'stretch',
+    marginBottom: 32,
+    gap: 12,
+  },
+  premiumFeatureRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  premiumFeatureText: {
+    fontSize: 15,
+    fontWeight: '500',
   },
 });

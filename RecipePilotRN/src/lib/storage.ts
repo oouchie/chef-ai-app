@@ -39,10 +39,10 @@ export function generateId(): string {
 }
 
 // Session helpers
-export function createSession(title?: string): ChatSession {
+export function createSession(title?: string, id?: string): ChatSession {
   const now = Date.now();
   return {
-    id: generateId(),
+    id: id || generateId(),
     title: title || `Chat ${new Date().toLocaleDateString()}`,
     messages: [],
     createdAt: now,

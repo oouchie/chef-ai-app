@@ -170,16 +170,22 @@ export default function RestaurantModal() {
           data={filteredRestaurants}
           keyExtractor={(item) => item.id}
           renderItem={renderRestaurant}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: selectedRestaurant ? 280 : insets.bottom + 20 },
+          ]}
           showsVerticalScrollIndicator={false}
           style={styles.list}
         />
 
-        {/* Selected Restaurant Dishes */}
+        {/* Selected Restaurant Dishes - Fixed at bottom with safe area */}
         {selectedRestaurant && (
           <GlassView
             intensity="strong"
-            style={[styles.dishesPanel, { paddingBottom: insets.bottom + 16 }]}
+            style={[
+              styles.dishesPanel,
+              { paddingBottom: insets.bottom + 20, maxHeight: '55%' },
+            ]}
           >
             <View style={styles.dishesPanelHeader}>
               <Text style={styles.dishesEmoji}>{selectedRestaurant.emoji}</Text>
@@ -286,9 +292,18 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   dishesPanel: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     padding: 20,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 10,
   },
   dishesPanelHeader: {
     flexDirection: 'row',

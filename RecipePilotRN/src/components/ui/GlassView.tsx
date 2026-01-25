@@ -8,8 +8,9 @@ import Animated, {
   FadeInUp,
 } from 'react-native-reanimated';
 import { Shadows } from '@/theme';
+import { EditorialColors } from '@/theme';
 
-type GlassIntensity = 'light' | 'medium' | 'strong';
+type GlassIntensity = 'light' | 'medium' | 'strong' | 'warm';
 
 interface GlassViewProps {
   children: React.ReactNode;
@@ -19,12 +20,15 @@ interface GlassViewProps {
   animated?: boolean;
   animationType?: 'fade' | 'slideUp' | 'slideDown';
   animationDelay?: number;
+  warmTint?: boolean;
 }
 
+// Refined blur settings - slightly less on iOS for better performance
 const intensitySettings = {
-  light: { blur: 20, opacity: 0.75 },
-  medium: { blur: 40, opacity: 0.85 },
-  strong: { blur: 60, opacity: 0.95 },
+  light: { blur: 16, opacity: 0.78 },
+  medium: { blur: 28, opacity: 0.86 },
+  strong: { blur: 40, opacity: 0.92 },
+  warm: { blur: 24, opacity: 0.88 },
 };
 
 const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
@@ -37,18 +41,38 @@ export default function GlassView({
   animated = false,
   animationType = 'fade',
   animationDelay = 0,
+  warmTint = false,
 }: GlassViewProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const settings = intensitySettings[intensity];
 
-  const backgroundColor = isDark
-    ? `rgba(20, 20, 20, ${settings.opacity})`
-    : `rgba(255, 255, 255, ${settings.opacity})`;
+  // Warm cream-based backgrounds instead of pure white
+  const getBackgroundColor = () => {
+    if (intensity === 'warm' || warmTint) {
+      return isDark
+        ? EditorialColors.glassWarmDark
+        : EditorialColors.glassWarmLight;
+    }
+    return isDark
+      ? `rgba(26, 22, 20, ${settings.opacity})`
+      : `rgba(250, 248, 245, ${settings.opacity})`;
+  };
 
-  const borderColor = isDark
-    ? 'rgba(255, 255, 255, 0.1)'
-    : 'rgba(255, 255, 255, 0.4)';
+  // Softer borders with warm undertone
+  const getBorderColor = () => {
+    if (intensity === 'warm' || warmTint) {
+      return isDark
+        ? EditorialColors.glassBorderWarmDark
+        : EditorialColors.glassBorderWarmLight;
+    }
+    return isDark
+      ? 'rgba(255, 255, 255, 0.08)'
+      : 'rgba(232, 226, 219, 0.5)';
+  };
+
+  const backgroundColor = getBackgroundColor();
+  const borderColor = getBorderColor();
 
   const flatStyle = StyleSheet.flatten(style) || {};
   const containerStyle: ViewStyle = {
@@ -62,13 +86,13 @@ export default function GlassView({
 
   const enteringAnimation = animated
     ? animationType === 'slideUp'
-      ? FadeInUp.delay(animationDelay).duration(400)
+      ? FadeInUp.delay(animationDelay).duration(350).springify().damping(18)
       : animationType === 'slideDown'
-      ? FadeInDown.delay(animationDelay).duration(400)
-      : FadeIn.delay(animationDelay).duration(300)
+      ? FadeInDown.delay(animationDelay).duration(350).springify().damping(18)
+      : FadeIn.delay(animationDelay).duration(280)
     : undefined;
 
-  // On iOS, use BlurView for real glassmorphism
+  // On iOS, use BlurView for real glassmorphism with refined blur
   // On Android, use a semi-transparent background (BlurView performance is poor on Android)
   if (Platform.OS === 'ios') {
     return (
@@ -96,18 +120,21 @@ export default function GlassView({
   );
 }
 
-// Glass Card variant with hover-like press effect
+// Glass Card variant with editorial styling
 export function GlassCard({
   children,
   style,
   onPress,
+  warmTint = true,
   ...props
 }: GlassViewProps & { onPress?: () => void }) {
   const flatStyle = StyleSheet.flatten([{ padding: 16 }, style]);
   return (
     <GlassView
-      intensity="strong"
+      intensity="medium"
+      warmTint={warmTint}
       style={flatStyle}
+      borderRadius={14}
       {...props}
     >
       {children}
@@ -115,7 +142,7 @@ export function GlassCard({
   );
 }
 
-// Glass Panel for sidebars and modals
+// Glass Panel for sidebars and modals - warm editorial feel
 export function GlassPanel({
   children,
   style,
@@ -124,7 +151,28 @@ export function GlassPanel({
   return (
     <GlassView
       intensity="strong"
+      warmTint
       borderRadius={0}
+      style={style}
+      {...props}
+    >
+      {children}
+    </GlassView>
+  );
+}
+
+// Warm Glass variant - specifically for editorial layouts
+export function WarmGlassView({
+  children,
+  style,
+  borderRadius = 16,
+  ...props
+}: Omit<GlassViewProps, 'intensity' | 'warmTint'>) {
+  return (
+    <GlassView
+      intensity="warm"
+      warmTint
+      borderRadius={borderRadius}
       style={style}
       {...props}
     >

@@ -7,16 +7,16 @@
     "icon": "./assets/images/icon.png",
     "scheme": "recipepilot",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#1a3a8f"
+      "backgroundColor": "#c45d3a"
     },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.chefai2.app",
-      "buildNumber": "30",
+      "buildNumber": "46",
       "infoPlist": {
         "NSMicrophoneUsageDescription": "RecipePilot needs access to your microphone for voice input when searching for recipes.",
         "UIBackgroundModes": [
@@ -28,9 +28,10 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#1a3a8f"
+        "backgroundColor": "#c45d3a"
       },
       "package": "com.chefai2.app",
+      "versionCode": 46,
       "permissions": [
         "android.permission.RECORD_AUDIO",
         "android.permission.VIBRATE"

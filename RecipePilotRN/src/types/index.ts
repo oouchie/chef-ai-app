@@ -39,6 +39,9 @@ export interface TodoItem {
   createdAt: number;
 }
 
+// Alias for backwards compatibility
+export type Todo = TodoItem;
+
 export interface ChatSession {
   id: string;
   title: string;

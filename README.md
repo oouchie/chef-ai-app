@@ -19,24 +19,43 @@ AI-powered recipe discovery and cooking assistant for iOS and Android.
 
 ### Cooking Tools
 - **Multiple Timers** - Run several timers simultaneously
-- **Unit Converter** - Convert between cups, ml, oz, grams, °F, °C
+- **Unit Converter** - Convert between cups, ml, oz, grams, F, C
 - **Ingredient Substitutions** - Find alternatives for missing ingredients
 - **Nutrition Calculator** - Estimate nutritional information
 
-### Meal Planning
+## Premium Features ($4.99/month)
+
+| Feature | Free | Premium |
+|---------|------|---------|
+| AI Requests | 10/day | Unlimited |
+| Restaurant Recipes | 1 lifetime trial | Unlimited |
+| Meal Planning | No | Yes |
+| Voice Input | No | Yes |
+| Ad-Free | No | Yes |
+
+### Subscription Pricing
+- **Monthly:** $4.99/month
+- **Yearly:** $29.99/year (Save 50%)
+- **7-day free trial** included with subscription
+
+### Restaurant-Inspired Recipes (Premium)
+Recreate dishes from popular restaurants:
+- Olive Garden, Chipotle, Cheesecake Factory, Chick-fil-A
+- Panda Express, Texas Roadhouse, Red Lobster, Cracker Barrel
+- P.F. Chang's, In-N-Out, Popeyes, Outback Steakhouse
+
+### Meal Planning (Premium)
 - **Weekly Calendar** - Plan meals for the entire week
 - **Drag & Drop** - Easily organize your meal schedule
 - **Auto Shopping List** - Generate lists from your meal plan
 
-### Premium Features
-- **Unlimited AI Requests** - No daily limits
-- **Restaurant-Inspired Recipes** - Recreate dishes from Olive Garden, Chipotle, Chick-fil-A, and more
-- **Voice Input** - Search by speaking
-- **Ad-Free Experience**
+## Free Usage Rules
 
-## Screenshots
-
-Coming soon...
+1. **AI Chat:** 10 requests per day for free users
+2. **Restaurant Recipes:** 1 lifetime free trial, then premium-locked
+3. **Meal Planning:** Premium feature only (no free access)
+4. **Cooking Tools:** Always free (timers, converters, substitutions)
+5. **Recipe Saving:** Always free
 
 ## Tech Stack
 
@@ -44,7 +63,7 @@ Coming soon...
 |----------|------------|
 | Framework | React Native + Expo SDK 52 |
 | Navigation | expo-router 4.x (file-based) |
-| Styling | NativeWind 4.x (Tailwind CSS) |
+| Styling | React Native StyleSheet |
 | Animations | react-native-reanimated 3.x |
 | UI Effects | expo-blur, expo-linear-gradient |
 | Backend | Supabase (PostgreSQL, Edge Functions) |
@@ -91,12 +110,24 @@ EXPO_PUBLIC_SUPABASE_URL=your_supabase_url
 EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
+### StoreKit Testing (iOS)
+
+For testing in-app purchases during development:
+1. Use Xcode's StoreKit Configuration file if available
+2. RevenueCat sandbox mode is enabled by default in development
+3. Test purchases use sandbox Apple IDs
+
 ## Building for Production
 
 ### iOS (TestFlight)
 
 ```bash
 cd RecipePilotRN
+
+# Build and auto-submit to TestFlight
+eas build --platform ios --profile production --auto-submit
+
+# Or build and submit separately
 eas build --platform ios --profile production
 eas submit --platform ios
 ```
@@ -113,29 +144,30 @@ eas submit --platform android
 
 ```
 RecipePilotRN/
-├── app/                    # expo-router pages
-│   ├── (tabs)/            # Bottom tab screens
-│   │   ├── chat.tsx       # Main chat interface
-│   │   ├── saved.tsx      # Saved recipes
-│   │   └── settings.tsx   # Settings
-│   └── (modals)/          # Modal screens
-│       ├── tools.tsx      # Cooking tools
-│       ├── meal-planner.tsx
-│       ├── paywall.tsx
-│       └── restaurant.tsx
-├── src/
-│   ├── components/        # UI components
-│   ├── lib/              # Services (API, storage)
-│   ├── theme/            # Colors, gradients, animations
-│   ├── types/            # TypeScript definitions
-│   └── providers/        # Context providers
-└── assets/               # Images, sounds
+|-- app/                    # expo-router pages
+|   |-- (tabs)/            # Bottom tab screens
+|   |   |-- chat.tsx       # Main chat interface
+|   |   |-- saved.tsx      # Saved recipes
+|   |   |-- shopping.tsx   # Shopping list
+|   |   |-- settings.tsx   # Settings
+|   |-- (modals)/          # Modal screens
+|       |-- tools.tsx      # Cooking tools
+|       |-- meal-planner.tsx # Meal planning (Premium)
+|       |-- paywall.tsx    # Subscription
+|       |-- restaurant.tsx # Restaurant recipes
+|-- src/
+|   |-- components/        # UI components
+|   |-- lib/              # Services (API, storage, purchases)
+|   |-- theme/            # Colors, gradients, animations
+|   |-- types/            # TypeScript definitions
+|   |-- providers/        # Context providers
+|-- assets/               # Images, sounds
 ```
 
 ## Version
 
 - **App Version:** 1.0.0
-- **Build Number:** 25
+- **Build Number:** 46
 - **Bundle ID:** com.chefai2.app
 
 ## License

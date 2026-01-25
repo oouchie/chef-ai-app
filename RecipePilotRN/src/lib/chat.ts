@@ -1,5 +1,5 @@
-import { Recipe, WorldRegion, WORLD_REGIONS } from '@/types';
-import { getStoredApiKey, setStoredApiKey, removeStoredApiKey } from './storage';
+import { Recipe, WorldRegion } from '@/types';
+import { sendChatMessageViaSupabase } from './supabase';
 
 interface ChatResponse {
   response: string;
@@ -7,174 +7,19 @@ interface ChatResponse {
   isDemo: boolean;
 }
 
-// Call Anthropic API directly
+// Send chat message via Supabase Edge Function (Claude API key is server-side)
 export async function sendChatMessage(
   message: string,
   region: WorldRegion | 'all',
   conversationHistory: { role: string; content: string }[],
-  apiKey?: string
+  _apiKey?: string // Kept for backwards compatibility, no longer used
 ): Promise<ChatResponse> {
-  // If no API key, use demo mode
-  if (!apiKey) {
-    const demoRecipe = generateDemoRecipe(message, region);
-    return {
-      response: generateDemoResponse(message, region),
-      recipe: demoRecipe,
-      isDemo: true,
-    };
-  }
-
   try {
-    const regionInfo = region !== 'all'
-      ? WORLD_REGIONS.find(r => r.id === region)
-      : null;
-
-    const systemPrompt = `You are Chef AI, a friendly and knowledgeable culinary assistant who helps home cooks discover and master recipes from around the world.
-
-Your personality:
-- Warm, encouraging, and passionate about food
-- Share interesting cultural context about dishes
-- Offer practical tips for home cooks
-- Suggest ingredient substitutions when appropriate
-- Consider dietary restrictions when mentioned
-
-${regionInfo ? `The user is currently exploring ${regionInfo.name} cuisine (${regionInfo.cuisines.join(', ')}).` : 'The user is exploring cuisines from all regions.'}
-
-When recommending a recipe, you MUST include a JSON block with the recipe details in this exact format:
-\`\`\`recipe
-{
-  "name": "Recipe Name",
-  "region": "asian|african|european|latin-american|middle-eastern|southern|soul-food|cajun-creole|tex-mex|bbq|new-england|midwest|oceanian|caribbean",
-  "cuisine": "Specific Cuisine (e.g., Italian, Thai)",
-  "description": "Brief appetizing description",
-  "prepTime": "15 mins",
-  "cookTime": "30 mins",
-  "servings": 4,
-  "difficulty": "Easy|Medium|Hard",
-  "ingredients": [
-    {"name": "chicken breast", "amount": "2", "unit": "lbs", "notes": "boneless, skinless"},
-    {"name": "olive oil", "amount": "2", "unit": "tbsp", "notes": ""},
-    {"name": "garlic", "amount": "4", "unit": "cloves", "notes": "minced"}
-  ],
-  "instructions": [
-    "Step 1 instruction",
-    "Step 2 instruction"
-  ],
-  "tips": ["Helpful tip 1", "Helpful tip 2"],
-  "tags": ["tag1", "tag2"]
-}
-\`\`\`
-
-CRITICAL REQUIREMENTS:
-- The "ingredients" array is REQUIRED and must contain at least 3-5 ingredient objects
-- Each ingredient MUST have "name", "amount", and "unit" fields (notes is optional)
-- Never skip the ingredients array - users need this for their shopping list
-- Include ALL ingredients needed to make the dish
-
-Guidelines:
-- Keep responses conversational but informative
-- ALWAYS include the recipe JSON block when sharing a specific recipe
-- Offer to modify recipes based on dietary needs
-- Share cooking tips and cultural background
-- Be encouraging to beginner cooks`;
-
-    const messages = [
-      ...conversationHistory.slice(-10).map((msg) => ({
-        role: msg.role as 'user' | 'assistant',
-        content: msg.content,
-      })),
-      {
-        role: 'user' as const,
-        content: message,
-      },
-    ];
-
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 2048,
-        system: systemPrompt,
-        messages,
-      }),
-    });
-
-    if (!response.ok) {
-      console.error('Anthropic API error:', await response.text());
-      return {
-        response: generateDemoResponse(message, region),
-        recipe: generateDemoRecipe(message, region),
-        isDemo: true,
-      };
-    }
-
-    const data = await response.json();
-    const content = data.content[0]?.text || '';
-
-    // Extract recipe from response if present
-    const recipeMatch = content.match(/```recipe\s*([\s\S]*?)\s*```/);
-    let recipe: Recipe | null = null;
-
-    if (recipeMatch) {
-      try {
-        const recipeData = JSON.parse(recipeMatch[1]);
-
-        // Process ingredients
-        let processedIngredients: { name: string; amount: string; unit: string; notes?: string }[] = [];
-        if (Array.isArray(recipeData.ingredients)) {
-          processedIngredients = recipeData.ingredients.map((ing: unknown) => {
-            if (typeof ing === 'object' && ing !== null) {
-              const ingObj = ing as Record<string, unknown>;
-              return {
-                name: String(ingObj.name || ingObj.ingredient || 'Unknown'),
-                amount: String(ingObj.amount || ingObj.quantity || '1'),
-                unit: String(ingObj.unit || ''),
-                notes: ingObj.notes ? String(ingObj.notes) : undefined,
-              };
-            }
-            if (typeof ing === 'string') {
-              return { name: ing, amount: '1', unit: '', notes: undefined };
-            }
-            return { name: 'Unknown ingredient', amount: '1', unit: '', notes: undefined };
-          });
-        }
-
-        recipe = {
-          id: `recipe-${Date.now()}`,
-          name: recipeData.name || 'Unnamed Recipe',
-          region: recipeData.region || 'european',
-          cuisine: recipeData.cuisine || 'International',
-          description: recipeData.description || '',
-          prepTime: recipeData.prepTime || '',
-          cookTime: recipeData.cookTime || '',
-          servings: recipeData.servings || 4,
-          difficulty: recipeData.difficulty || 'Medium',
-          ingredients: processedIngredients,
-          instructions: Array.isArray(recipeData.instructions) ? recipeData.instructions : [],
-          tips: Array.isArray(recipeData.tips) ? recipeData.tips : [],
-          tags: Array.isArray(recipeData.tags) ? recipeData.tags : [],
-        };
-      } catch (e) {
-        console.error('Failed to parse recipe JSON:', e);
-      }
-    }
-
-    // Clean up the response text
-    const cleanResponse = content.replace(/```recipe[\s\S]*?```/g, '').trim();
-
-    return {
-      response: cleanResponse,
-      recipe,
-      isDemo: false,
-    };
+    const result = await sendChatMessageViaSupabase(message, region, conversationHistory);
+    return result;
   } catch (error) {
     console.error('Chat error:', error);
+    // Fallback to demo mode on error
     return {
       response: generateDemoResponse(message, region),
       recipe: generateDemoRecipe(message, region),
@@ -187,7 +32,7 @@ function generateDemoResponse(message: string, region?: WorldRegion | 'all'): st
   const lowerMessage = message.toLowerCase();
 
   if (lowerMessage.includes('hello') || lowerMessage.includes('hi')) {
-    return "Hello! I'm Chef AI, your personal culinary assistant. I'm here to help you discover amazing recipes from around the world! What are you in the mood for today?\n\n(Demo mode - Add your Anthropic API key in Settings for AI responses)";
+    return "Hello! I'm Chef AI, your personal culinary assistant. I'm here to help you discover amazing recipes from around the world! What are you in the mood for today?";
   }
 
   if (lowerMessage.includes('chicken') || lowerMessage.includes('rice')) {
@@ -227,7 +72,7 @@ function generateDemoResponse(message: string, region?: WorldRegion | 'all'): st
     return regionResponses[region];
   }
 
-  return "That sounds delicious! Let me find the perfect recipe for you.\n\n(Demo mode - Add your Anthropic API key in Settings for AI responses)";
+  return "That sounds delicious! Let me find the perfect recipe for you.";
 }
 
 function generateDemoRecipe(message: string, region?: WorldRegion | 'all'): Recipe | null {
@@ -360,6 +205,3 @@ function generateDemoRecipe(message: string, region?: WorldRegion | 'all'): Reci
     tags: ["stir-fry", "quick", "versatile", "asian", "healthy"],
   };
 }
-
-// Re-export storage functions for API key
-export { getStoredApiKey, setStoredApiKey, removeStoredApiKey };

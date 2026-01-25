@@ -11,7 +11,7 @@ import { ThemeProvider } from '@/providers/ThemeProvider';
 import { ToastProvider } from '@/components/Toast';
 import { Colors } from '@/theme';
 
-import '@/global.css';
+// Note: global.css import removed - app uses StyleSheet, not NativeWind className
 
 // Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();

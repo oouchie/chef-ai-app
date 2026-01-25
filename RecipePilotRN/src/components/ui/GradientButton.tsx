@@ -6,6 +6,8 @@ import {
   ViewStyle,
   TextStyle,
   ActivityIndicator,
+  View,
+  useColorScheme,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
@@ -13,12 +15,14 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   withTiming,
+  interpolate,
 } from 'react-native-reanimated';
 import { Gradients, GradientKey } from '@/theme';
 import { Shadows } from '@/theme';
+import { Colors, EditorialColors } from '@/theme';
 import { hapticLight } from '@/lib/haptics';
 
-type ButtonVariant = 'primary' | 'secondary' | 'rose' | 'success' | 'premium';
+type ButtonVariant = 'primary' | 'secondary' | 'accent' | 'success' | 'premium' | 'outline' | 'ghost';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 interface GradientButtonProps {
@@ -33,21 +37,27 @@ interface GradientButtonProps {
   style?: ViewStyle;
   textStyle?: TextStyle;
   fullWidth?: boolean;
-  withGlow?: boolean;
+  withShadow?: boolean;
 }
 
-const variantGradients: Record<ButtonVariant, readonly [string, string, ...string[]]> = {
+const variantGradients: Record<Exclude<ButtonVariant, 'outline' | 'ghost'>, readonly [string, string, ...string[]]> = {
   primary: Gradients.primary,
   secondary: Gradients.secondary,
-  rose: Gradients.rose,
+  accent: Gradients.accent,
   success: Gradients.success,
   premium: Gradients.premium,
 };
 
-const sizeStyles: Record<ButtonSize, { paddingVertical: number; paddingHorizontal: number; fontSize: number }> = {
-  sm: { paddingVertical: 8, paddingHorizontal: 16, fontSize: 14 },
-  md: { paddingVertical: 12, paddingHorizontal: 20, fontSize: 16 },
-  lg: { paddingVertical: 16, paddingHorizontal: 28, fontSize: 18 },
+const sizeStyles: Record<ButtonSize, {
+  paddingVertical: number;
+  paddingHorizontal: number;
+  fontSize: number;
+  borderRadius: number;
+  letterSpacing: number;
+}> = {
+  sm: { paddingVertical: 10, paddingHorizontal: 18, fontSize: 13, borderRadius: 10, letterSpacing: 0.3 },
+  md: { paddingVertical: 14, paddingHorizontal: 24, fontSize: 15, borderRadius: 12, letterSpacing: 0.4 },
+  lg: { paddingVertical: 18, paddingHorizontal: 32, fontSize: 17, borderRadius: 14, letterSpacing: 0.5 },
 };
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
@@ -64,8 +74,12 @@ export default function GradientButton({
   style,
   textStyle,
   fullWidth = false,
-  withGlow = true,
+  withShadow = true,
 }: GradientButtonProps) {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const colors = isDark ? Colors.dark : Colors.light;
+
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
 
@@ -75,14 +89,14 @@ export default function GradientButton({
   }));
 
   const handlePressIn = useCallback(() => {
-    scale.value = withSpring(0.97, { damping: 15, stiffness: 300 });
-    opacity.value = withTiming(0.9, { duration: 100 });
+    scale.value = withSpring(0.97, { damping: 20, stiffness: 400 });
+    opacity.value = withTiming(0.92, { duration: 80 });
     hapticLight();
   }, []);
 
   const handlePressOut = useCallback(() => {
-    scale.value = withSpring(1, { damping: 15, stiffness: 300 });
-    opacity.value = withTiming(1, { duration: 100 });
+    scale.value = withSpring(1, { damping: 20, stiffness: 400 });
+    opacity.value = withTiming(1, { duration: 80 });
   }, []);
 
   const handlePress = useCallback(() => {
@@ -92,17 +106,139 @@ export default function GradientButton({
   }, [disabled, loading, onPress]);
 
   const sizeConfig = sizeStyles[size];
-  const gradientColors = variantGradients[variant];
+  const isOutline = variant === 'outline';
+  const isGhost = variant === 'ghost';
 
-  const glowShadow = withGlow
-    ? variant === 'primary'
-      ? Shadows.glowPrimary
-      : variant === 'secondary'
-      ? Shadows.glowSecondary
-      : variant === 'rose'
-      ? Shadows.glowRose
-      : Shadows.glowPrimary
-    : {};
+  // Get shadow based on variant
+  const getShadow = () => {
+    if (!withShadow || isGhost) return {};
+    if (isOutline) return Shadows.sm;
+    return Shadows.button;
+  };
+
+  // Outline variant
+  if (isOutline) {
+    return (
+      <AnimatedTouchable
+        onPress={handlePress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        disabled={disabled || loading}
+        activeOpacity={1}
+        style={[
+          animatedStyle,
+          styles.outlineContainer,
+          {
+            borderRadius: sizeConfig.borderRadius,
+            borderColor: colors.primary,
+          },
+          fullWidth && styles.fullWidth,
+          disabled && styles.disabled,
+          getShadow(),
+          style,
+        ]}
+      >
+        <View
+          style={[
+            styles.outlineInner,
+            {
+              paddingVertical: sizeConfig.paddingVertical,
+              paddingHorizontal: sizeConfig.paddingHorizontal,
+              borderRadius: sizeConfig.borderRadius - 2,
+            },
+          ]}
+        >
+          {loading ? (
+            <ActivityIndicator color={colors.primary} size="small" />
+          ) : (
+            <>
+              {icon && iconPosition === 'left' && (
+                <Animated.View style={styles.iconLeft}>{icon}</Animated.View>
+              )}
+              <Text
+                style={[
+                  styles.outlineText,
+                  {
+                    fontSize: sizeConfig.fontSize,
+                    letterSpacing: sizeConfig.letterSpacing,
+                    color: colors.primary,
+                  },
+                  textStyle,
+                ]}
+              >
+                {title}
+              </Text>
+              {icon && iconPosition === 'right' && (
+                <Animated.View style={styles.iconRight}>{icon}</Animated.View>
+              )}
+            </>
+          )}
+        </View>
+      </AnimatedTouchable>
+    );
+  }
+
+  // Ghost variant
+  if (isGhost) {
+    return (
+      <AnimatedTouchable
+        onPress={handlePress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        disabled={disabled || loading}
+        activeOpacity={1}
+        style={[
+          animatedStyle,
+          styles.ghostContainer,
+          {
+            borderRadius: sizeConfig.borderRadius,
+          },
+          fullWidth && styles.fullWidth,
+          disabled && styles.disabled,
+          style,
+        ]}
+      >
+        <View
+          style={[
+            styles.ghostInner,
+            {
+              paddingVertical: sizeConfig.paddingVertical - 2,
+              paddingHorizontal: sizeConfig.paddingHorizontal - 4,
+            },
+          ]}
+        >
+          {loading ? (
+            <ActivityIndicator color={colors.muted} size="small" />
+          ) : (
+            <>
+              {icon && iconPosition === 'left' && (
+                <Animated.View style={styles.iconLeft}>{icon}</Animated.View>
+              )}
+              <Text
+                style={[
+                  styles.ghostText,
+                  {
+                    fontSize: sizeConfig.fontSize,
+                    letterSpacing: sizeConfig.letterSpacing,
+                    color: colors.muted,
+                  },
+                  textStyle,
+                ]}
+              >
+                {title}
+              </Text>
+              {icon && iconPosition === 'right' && (
+                <Animated.View style={styles.iconRight}>{icon}</Animated.View>
+              )}
+            </>
+          )}
+        </View>
+      </AnimatedTouchable>
+    );
+  }
+
+  // Standard gradient variants
+  const gradientColors = variantGradients[variant as Exclude<ButtonVariant, 'outline' | 'ghost'>];
 
   return (
     <AnimatedTouchable
@@ -114,9 +250,10 @@ export default function GradientButton({
       style={[
         animatedStyle,
         styles.container,
+        { borderRadius: sizeConfig.borderRadius },
         fullWidth && styles.fullWidth,
         disabled && styles.disabled,
-        glowShadow,
+        getShadow(),
         style,
       ]}
     >
@@ -129,6 +266,7 @@ export default function GradientButton({
           {
             paddingVertical: sizeConfig.paddingVertical,
             paddingHorizontal: sizeConfig.paddingHorizontal,
+            borderRadius: sizeConfig.borderRadius,
           },
         ]}
       >
@@ -142,7 +280,10 @@ export default function GradientButton({
             <Text
               style={[
                 styles.text,
-                { fontSize: sizeConfig.fontSize },
+                {
+                  fontSize: sizeConfig.fontSize,
+                  letterSpacing: sizeConfig.letterSpacing,
+                },
                 textStyle,
               ]}
             >
@@ -174,16 +315,48 @@ export function GradientIconButton({
   }));
 
   const handlePressIn = useCallback(() => {
-    scale.value = withSpring(0.9, { damping: 15, stiffness: 300 });
+    scale.value = withSpring(0.9, { damping: 20, stiffness: 400 });
     hapticLight();
   }, []);
 
   const handlePressOut = useCallback(() => {
-    scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+    scale.value = withSpring(1, { damping: 20, stiffness: 400 });
   }, []);
 
-  const sizeMap = { sm: 36, md: 44, lg: 52 };
+  const sizeMap = { sm: 38, md: 46, lg: 54 };
+  const radiusMap = { sm: 10, md: 12, lg: 14 };
   const buttonSize = sizeMap[size];
+  const borderRadius = radiusMap[size];
+
+  const isOutline = variant === 'outline';
+  const isGhost = variant === 'ghost';
+
+  if (isOutline || isGhost) {
+    return (
+      <AnimatedTouchable
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        disabled={disabled}
+        activeOpacity={1}
+        style={[
+          animatedStyle,
+          disabled && styles.disabled,
+          isOutline ? [styles.iconButtonOutline, { width: buttonSize, height: buttonSize, borderRadius }] : undefined,
+          style,
+        ]}
+      >
+        <View
+          style={[
+            styles.iconButtonInner,
+            { width: buttonSize, height: buttonSize, borderRadius },
+          ]}
+        >
+          {icon}
+        </View>
+      </AnimatedTouchable>
+    );
+  }
 
   return (
     <AnimatedTouchable
@@ -192,15 +365,20 @@ export function GradientIconButton({
       onPressOut={handlePressOut}
       disabled={disabled}
       activeOpacity={1}
-      style={[animatedStyle, disabled && styles.disabled, style]}
+      style={[
+        animatedStyle,
+        disabled && styles.disabled,
+        Shadows.button,
+        style,
+      ]}
     >
       <LinearGradient
-        colors={variantGradients[variant]}
+        colors={variantGradients[variant as Exclude<ButtonVariant, 'outline' | 'ghost'>]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[
           styles.iconButton,
-          { width: buttonSize, height: buttonSize, borderRadius: buttonSize / 2 },
+          { width: buttonSize, height: buttonSize, borderRadius },
         ]}
       >
         {icon}
@@ -211,7 +389,6 @@ export function GradientIconButton({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 12,
     overflow: 'hidden',
   },
   fullWidth: {
@@ -221,23 +398,58 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 12,
   },
   text: {
-    color: 'white',
-    fontWeight: '600',
+    color: '#ffffff',
+    fontWeight: '700',
     textAlign: 'center',
   },
   iconLeft: {
-    marginRight: 8,
+    marginRight: 10,
   },
   iconRight: {
-    marginLeft: 8,
+    marginLeft: 10,
   },
   disabled: {
     opacity: 0.5,
   },
   iconButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  // Outline variant styles
+  outlineContainer: {
+    borderWidth: 1.5,
+    overflow: 'hidden',
+  },
+  outlineInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  outlineText: {
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  // Ghost variant styles
+  ghostContainer: {
+    overflow: 'hidden',
+  },
+  ghostInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ghostText: {
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  // Icon button variants
+  iconButtonOutline: {
+    borderWidth: 1.5,
+    borderColor: EditorialColors.terracotta,
+  },
+  iconButtonInner: {
     alignItems: 'center',
     justifyContent: 'center',
   },

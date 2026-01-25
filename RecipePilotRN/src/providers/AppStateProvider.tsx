@@ -27,7 +27,7 @@ import {
 type AppAction =
   | { type: 'SET_STATE'; payload: AppState }
   | { type: 'SET_REGION'; payload: WorldRegion | 'all' }
-  | { type: 'CREATE_SESSION'; payload?: string }
+  | { type: 'CREATE_SESSION'; payload: { id: string; title?: string } }
   | { type: 'SET_CURRENT_SESSION'; payload: string | null }
   | { type: 'DELETE_SESSION'; payload: string }
   | { type: 'ADD_MESSAGE'; payload: { sessionId: string; message: Omit<Message, 'id' | 'timestamp'> } }
@@ -50,7 +50,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, selectedRegion: action.payload };
 
     case 'CREATE_SESSION': {
-      const newSession = createSession(action.payload);
+      const newSession = createSession(action.payload.title, action.payload.id);
       return {
         ...state,
         sessions: [...state.sessions, newSession],
@@ -176,9 +176,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
   // Sessions
   const createNewSession = useCallback((title?: string): string => {
-    const newSession = createSession(title);
-    dispatch({ type: 'CREATE_SESSION', payload: title });
-    return newSession.id;
+    // Generate ID upfront to ensure consistency between return value and state
+    const sessionId = generateId();
+    dispatch({ type: 'CREATE_SESSION', payload: { id: sessionId, title } });
+    return sessionId;
   }, []);
 
   const setCurrentSession = useCallback((sessionId: string | null) => {

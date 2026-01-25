@@ -212,10 +212,10 @@ export default function PaywallModal() {
                 </View>
               )}
               <Text style={[styles.planName, { color: colors.foreground }]}>Yearly</Text>
-              <Text style={[styles.planPrice, { color: colors.primary }]}>$49.99</Text>
+              <Text style={[styles.planPrice, { color: colors.primary }]}>$29.99</Text>
               <Text style={[styles.planPeriod, { color: colors.muted }]}>/year</Text>
               <Text style={[styles.planSaving, { color: colors.success }]}>
-                Save 58%
+                Save 50%
               </Text>
             </TouchableOpacity>
 
@@ -232,7 +232,7 @@ export default function PaywallModal() {
               onPress={() => setSelectedPlan('monthly')}
             >
               <Text style={[styles.planName, { color: colors.foreground }]}>Monthly</Text>
-              <Text style={[styles.planPrice, { color: colors.primary }]}>$9.99</Text>
+              <Text style={[styles.planPrice, { color: colors.primary }]}>$4.99</Text>
               <Text style={[styles.planPeriod, { color: colors.muted }]}>/month</Text>
             </TouchableOpacity>
           </View>
@@ -250,7 +250,7 @@ export default function PaywallModal() {
             size="lg"
           />
           <Text style={[styles.trialText, { color: colors.muted }]}>
-            7-day free trial, then {selectedPlan === 'yearly' ? '$49.99/year' : '$9.99/month'}
+            7-day free trial, then {selectedPlan === 'yearly' ? '$29.99/year' : '$4.99/month'}
           </Text>
 
           <TouchableOpacity

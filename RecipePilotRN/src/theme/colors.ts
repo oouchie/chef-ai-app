@@ -1,54 +1,141 @@
 import { Appearance } from 'react-native';
 
+// Culinary Editorial Theme
+// Sophisticated, magazine-quality, warm and appetizing
+
 export const Colors = {
   light: {
-    // Clean iOS-style backgrounds
-    background: '#f8fafc',
-    foreground: '#0f172a',
-    // Blue primary matching logo
-    primary: '#1a3a8f',
-    primaryLight: '#3b5dc9',
-    primaryDark: '#132c6b',
-    // Warm accent for food elements
-    secondary: '#f97316',
-    accent: '#ef4444',
-    // Native iOS card style
+    // Warm cream backgrounds - editorial warmth
+    background: '#faf8f5',
+    foreground: '#2d2420',
+
+    // Card surfaces
     card: '#ffffff',
-    border: '#e2e8f0',
-    muted: '#64748b',
-    // Semantic colors
-    success: '#22c55e',
-    error: '#ef4444',
-    warning: '#f59e0b',
-    // Glassmorphism - subtle for native feel
-    glassBackground: 'rgba(255, 255, 255, 0.85)',
-    glassBackgroundStrong: 'rgba(255, 255, 255, 0.95)',
-    glassBorder: 'rgba(255, 255, 255, 0.5)',
+    cardAlt: '#f5f2ed',
+    cardElevated: '#fffdfb',
+
+    // Deep terracotta primary - appetizing, warm
+    primary: '#c45d3a',
+    primaryLight: '#d4735a',
+    primaryDark: '#a84d2e',
+
+    // Sage green secondary - fresh, natural
+    secondary: '#7d9a78',
+    secondaryLight: '#9ab896',
+
+    // Warm gold accent - premium feel
+    accent: '#d4a574',
+    accentLight: '#e8c9a8',
+
+    // Warm gray muted tones
+    muted: '#8a7f76',
+    mutedLight: '#b8ada3',
+
+    // Subtle warm border
+    border: '#e8e2da',
+    borderLight: '#f0ebe4',
+
+    // Semantic colors - using palette colors
+    success: '#7d9a78',
+    error: '#c45d3a',
+    warning: '#d4a574',
+
+    // Glassmorphism - warm cream tones
+    glassBackground: 'rgba(250, 248, 245, 0.85)',
+    glassBackgroundStrong: 'rgba(250, 248, 245, 0.95)',
+    glassBorder: 'rgba(200, 190, 180, 0.3)',
+
+    // Message bubbles
+    userBubble: '#c45d3a',
+    assistantBubble: '#ffffff',
+
+    // Input area
+    inputBackground: 'rgba(250, 248, 245, 0.95)',
   },
   dark: {
-    // Dark iOS-style backgrounds
-    background: '#0f172a',
-    foreground: '#f8fafc',
-    // Brighter blue for dark mode
-    primary: '#3b82f6',
-    primaryLight: '#60a5fa',
-    primaryDark: '#1a3a8f',
-    // Warm accent
-    secondary: '#fb923c',
-    accent: '#f87171',
-    // Native iOS dark card
-    card: '#1e293b',
-    border: '#334155',
-    muted: '#94a3b8',
-    // Semantic colors
-    success: '#4ade80',
-    error: '#f87171',
-    warning: '#fbbf24',
-    // Glassmorphism - richer for dark mode
-    glassBackground: 'rgba(15, 23, 42, 0.85)',
-    glassBackgroundStrong: 'rgba(30, 41, 59, 0.95)',
-    glassBorder: 'rgba(255, 255, 255, 0.1)',
+    // Deep espresso backgrounds - rich, luxurious
+    background: '#1a1614',
+    foreground: '#f5f2ed',
+
+    // Dark brown card surfaces
+    card: '#252220',
+    cardAlt: '#302c28',
+    cardElevated: '#2d2a26',
+
+    // Lighter terracotta for dark mode visibility
+    primary: '#d4735a',
+    primaryLight: '#e08a70',
+    primaryDark: '#c45d3a',
+
+    // Lighter sage for dark mode
+    secondary: '#9ab896',
+    secondaryLight: '#b5d0b0',
+
+    // Lighter gold accent
+    accent: '#e8c9a8',
+    accentLight: '#f0dcc4',
+
+    // Warm muted tones for dark
+    muted: '#6b615a',
+    mutedLight: '#8a7f76',
+
+    // Subtle dark border
+    border: '#3d3835',
+    borderLight: '#4a4540',
+
+    // Semantic colors - lighter for dark mode
+    success: '#9ab896',
+    error: '#d4735a',
+    warning: '#e8c9a8',
+
+    // Glassmorphism - deep espresso tones
+    glassBackground: 'rgba(26, 22, 20, 0.85)',
+    glassBackgroundStrong: 'rgba(37, 34, 32, 0.95)',
+    glassBorder: 'rgba(255, 255, 255, 0.08)',
+
+    // Message bubbles
+    userBubble: '#c45d3a',
+    assistantBubble: '#252220',
+
+    // Input area
+    inputBackground: 'rgba(37, 34, 32, 0.95)',
   },
+};
+
+// Editorial specific colors (not theme-dependent)
+export const EditorialColors = {
+  // Core palette
+  terracotta: '#c45d3a',
+  terracottaLight: '#d4735a',
+  terracottaDark: '#a84d2e',
+  sage: '#7d9a78',
+  sageLight: '#9ab896',
+  gold: '#d4a574',
+  goldLight: '#e8c9a8',
+  cream: '#faf8f5',
+  creamAlt: '#f5f2ed',
+  espresso: '#1a1614',
+  espressoLight: '#252220',
+
+  // Difficulty badge colors
+  easy: {
+    background: '#7d9a78',
+    backgroundLight: '#9ab896',
+  },
+  medium: {
+    background: '#d4a574',
+    backgroundLight: '#e8c9a8',
+  },
+  hard: {
+    background: '#c45d3a',
+    backgroundLight: '#d4735a',
+  },
+
+  // Glass warm tints
+  glassWarmLight: 'rgba(250, 248, 245, 0.92)',
+  glassWarmDark: 'rgba(26, 22, 20, 0.92)',
+  glassBorderWarmLight: 'rgba(212, 165, 116, 0.2)',
+  glassBorderWarmDark: 'rgba(212, 165, 116, 0.1)',
 };
 
 export type ThemeColors = typeof Colors.light;

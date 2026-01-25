@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,6 @@ import {
   useColorScheme,
   TouchableOpacity,
   Linking,
-  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -17,10 +16,9 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useAppState } from '@/providers/AppStateProvider';
 import { useToast } from '@/components/Toast';
 import { Colors } from '@/theme';
-import { getStoredApiKey, setStoredApiKey, removeStoredApiKey } from '@/lib/chat';
-import { hapticSuccess, hapticWarning } from '@/lib/haptics';
+import { hapticSuccess } from '@/lib/haptics';
 
-import { GlassView, GlassInput, GradientButton, GlassButton } from '@/components/ui';
+import { GlassView, GradientButton } from '@/components/ui';
 
 interface SettingsSectionProps {
   title: string;
@@ -103,55 +101,6 @@ export default function SettingsScreen() {
   const { state } = useAppState();
   const { showToast } = useToast();
 
-  const [apiKey, setApiKey] = useState('');
-  const [showApiKey, setShowApiKey] = useState(false);
-  const [hasStoredKey, setHasStoredKey] = useState(false);
-
-  // Load stored API key
-  useEffect(() => {
-    const loadApiKey = async () => {
-      const key = await getStoredApiKey();
-      if (key) {
-        setApiKey(key);
-        setHasStoredKey(true);
-      }
-    };
-    loadApiKey();
-  }, []);
-
-  const handleSaveApiKey = useCallback(async () => {
-    if (!apiKey.trim()) {
-      showToast('Please enter an API key', 'warning');
-      return;
-    }
-
-    await setStoredApiKey(apiKey.trim());
-    setHasStoredKey(true);
-    hapticSuccess();
-    showToast('API key saved successfully!', 'success');
-  }, [apiKey, showToast]);
-
-  const handleRemoveApiKey = useCallback(async () => {
-    Alert.alert(
-      'Remove API Key',
-      'Are you sure you want to remove your API key? You will switch to demo mode.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: async () => {
-            await removeStoredApiKey();
-            setApiKey('');
-            setHasStoredKey(false);
-            hapticWarning();
-            showToast('API key removed', 'info');
-          },
-        },
-      ]
-    );
-  }, [showToast]);
-
   const handleSubscribe = useCallback(() => {
     router.push('/(modals)/paywall');
   }, []);
@@ -189,66 +138,8 @@ export default function SettingsScreen() {
           </SettingsSection>
         </Animated.View>
 
-        {/* API Key Section */}
-        <Animated.View entering={FadeInDown.delay(100).duration(300)}>
-          <SettingsSection title="AI CONFIGURATION">
-            <View style={styles.apiKeySection}>
-              <Text style={[styles.apiKeyLabel, { color: colors.foreground }]}>
-                Anthropic API Key
-              </Text>
-              <Text style={[styles.apiKeyHint, { color: colors.muted }]}>
-                Get your key from console.anthropic.com
-              </Text>
-
-              <GlassInput
-                value={apiKey}
-                onChangeText={setApiKey}
-                placeholder="sk-ant-..."
-                secureTextEntry={!showApiKey}
-                autoCapitalize="none"
-                autoCorrect={false}
-                containerStyle={styles.apiKeyInput}
-                rightIcon={
-                  <Feather
-                    name={showApiKey ? 'eye-off' : 'eye'}
-                    size={20}
-                    color={colors.muted}
-                  />
-                }
-                onRightIconPress={() => setShowApiKey(!showApiKey)}
-              />
-
-              <View style={styles.apiKeyButtons}>
-                <GradientButton
-                  title={hasStoredKey ? 'Update Key' : 'Save Key'}
-                  onPress={handleSaveApiKey}
-                  size="sm"
-                  style={{ flex: 1 }}
-                />
-                {hasStoredKey && (
-                  <GlassButton
-                    title="Remove"
-                    onPress={handleRemoveApiKey}
-                    size="sm"
-                    style={{ marginLeft: 8 }}
-                  />
-                )}
-              </View>
-
-              {hasStoredKey && (
-                <View style={[styles.statusBadge, { backgroundColor: colors.success + '20' }]}>
-                  <Feather name="check-circle" size={14} color={colors.success} />
-                  <Text style={[styles.statusText, { color: colors.success }]}>
-                    API key configured
-                  </Text>
-                </View>
-              )}
-            </View>
-          </SettingsSection>
-        </Animated.View>
-
         {/* App Info Section */}
-        <Animated.View entering={FadeInDown.delay(200).duration(300)}>
+        <Animated.View entering={FadeInDown.delay(100).duration(300)}>
           <SettingsSection title="ABOUT">
             <SettingsRow
               icon="info"
@@ -272,7 +163,7 @@ export default function SettingsScreen() {
         </Animated.View>
 
         {/* Support Section */}
-        <Animated.View entering={FadeInDown.delay(300).duration(300)}>
+        <Animated.View entering={FadeInDown.delay(200).duration(300)}>
           <SettingsSection title="SUPPORT">
             <SettingsRow
               icon="mail"
@@ -292,7 +183,7 @@ export default function SettingsScreen() {
         </Animated.View>
 
         {/* Stats */}
-        <Animated.View entering={FadeInDown.delay(400).duration(300)}>
+        <Animated.View entering={FadeInDown.delay(300).duration(300)}>
           <View style={styles.stats}>
             <View style={styles.statItem}>
               <Text style={[styles.statValue, { color: colors.primary }]}>
@@ -384,38 +275,6 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     marginLeft: 60,
-  },
-  apiKeySection: {
-    padding: 16,
-  },
-  apiKeyLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  apiKeyHint: {
-    fontSize: 13,
-    marginBottom: 16,
-  },
-  apiKeyInput: {
-    marginBottom: 12,
-  },
-  apiKeyButtons: {
-    flexDirection: 'row',
-  },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    gap: 6,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 16,
-    marginTop: 12,
-  },
-  statusText: {
-    fontSize: 13,
-    fontWeight: '500',
   },
   stats: {
     flexDirection: 'row',

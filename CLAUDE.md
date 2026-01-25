@@ -7,7 +7,7 @@
 **Description:** AI-powered recipe discovery, meal planning, and step-by-step cooking assistant
 **Target Platform:** iOS 15.0+ (iPhone and iPad), Android
 **Distribution:** Apple App Store, Google Play Store
-**Current Build:** 25
+**Current Build:** 46
 
 ---
 
@@ -69,7 +69,7 @@ Recreate dishes from popular restaurants:
 |-------|------------|
 | Framework | Expo SDK 52 with expo-router 4.x |
 | Language | TypeScript 5.x |
-| Styling | NativeWind 4.x (Tailwind for React Native) |
+| Styling | React Native StyleSheet (inline styles) |
 | Animations | react-native-reanimated 3.x |
 | Glassmorphism | expo-blur + expo-linear-gradient |
 | Storage | @react-native-async-storage/async-storage |
@@ -78,6 +78,8 @@ Recreate dishes from popular restaurants:
 | Backend | Supabase (PostgreSQL, Edge Functions, Auth) |
 | AI Integration | Claude API (Anthropic) via Supabase Edge Function |
 | Payments | RevenueCat (react-native-purchases) |
+
+**Note:** NativeWind was removed due to blank screen issues caused by JSX transform conflicts. The app uses standard React Native StyleSheet.create() for all styling.
 
 ### Legacy Next.js + Capacitor (src/ & ios/)
 
@@ -126,9 +128,10 @@ recipe-chatbot/
 │   │   ├── types/            # TypeScript definitions
 │   │   └── providers/        # AppStateProvider, ThemeProvider
 │   ├── assets/               # Images, sounds
-│   ├── app.json             # Expo config
+│   ├── app.json             # Expo config (static)
+│   ├── app.config.js        # Dynamic config with env vars
 │   ├── package.json
-│   └── eas.json             # EAS Build config
+│   └── eas.json             # EAS Build config with env vars
 │
 ├── src/                       # Legacy Next.js (for Capacitor builds)
 ├── supabase/                  # Supabase Edge Functions
@@ -393,29 +396,59 @@ npx cap open ios
 
 ## Environment Setup
 
-### RecipePilotRN/.env
+### API Configuration (Server-Side)
+
+The Claude API key is stored **server-side** in Supabase Edge Function secrets. Users do NOT need to configure API keys - it's all handled automatically.
+
+```bash
+# Set Claude API key on Supabase (already configured)
+npx supabase secrets set CLAUDE_API_KEY=sk-ant-xxxxx
+```
+
+### RecipePilotRN/.env (Local Development)
 
 ```env
-EXPO_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+EXPO_PUBLIC_SUPABASE_URL=https://bwddfoqaqgrbendjgchr.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJxxx
 ```
 
-### Supabase Edge Function Secrets
+### RecipePilotRN/app.config.js (Build-Time Config)
 
-```bash
-npx supabase secrets set CLAUDE_API_KEY=sk-ant-xxxxx
+The `app.config.js` exposes Supabase credentials via `expo-constants` for reliable access in production builds:
+
+```javascript
+module.exports = ({ config }) => {
+  return {
+    ...config,
+    extra: {
+      ...config.extra,
+      supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://bwddfoqaqgrbendjgchr.supabase.co',
+      supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'eyJxxx...',
+    },
+  };
+};
 ```
 
 ### EAS Build (eas.json)
 
+Environment variables are configured in `eas.json` for production builds:
+
 ```json
 {
+  "build": {
+    "production": {
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://bwddfoqaqgrbendjgchr.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJxxx..."
+      }
+    }
+  },
   "submit": {
     "production": {
       "ios": {
-        "appleId": "your-apple-id@email.com",
-        "ascAppId": "your-app-store-connect-app-id",
-        "appleTeamId": "your-team-id"
+        "appleId": "oouchie@gmail.com",
+        "ascAppId": "6757722794",
+        "appleTeamId": "BA7AX9ZFTR"
       }
     }
   }
@@ -426,14 +459,26 @@ npx supabase secrets set CLAUDE_API_KEY=sk-ant-xxxxx
 
 ## Supabase Configuration
 
+### Project Details
+
+- **Project Name:** RecipePilot
+- **Reference ID:** bwddfoqaqgrbendjgchr
+- **Region:** East US (Ohio)
+- **URL:** https://bwddfoqaqgrbendjgchr.supabase.co
+
 ### Edge Function (supabase/functions/chat/)
+
+The chat Edge Function proxies requests to Claude API. The API key is stored as a Supabase secret.
 
 ```bash
 # Deploy
-npx supabase functions deploy chat
+npx supabase functions deploy chat --project-ref bwddfoqaqgrbendjgchr
 
 # View logs
-npx supabase functions logs chat
+npx supabase functions logs chat --project-ref bwddfoqaqgrbendjgchr
+
+# List secrets
+npx supabase secrets list --project-ref bwddfoqaqgrbendjgchr
 ```
 
 ### Claude API Settings
@@ -442,6 +487,16 @@ npx supabase functions logs chat
 model: 'claude-sonnet-4-20250514'
 max_tokens: 2048
 ```
+
+### Architecture
+
+```
+Mobile App → Supabase Edge Function → Claude API
+                    ↓
+            CLAUDE_API_KEY (secret)
+```
+
+Users don't need API keys. The Settings screen only shows subscription and app info.
 
 ---
 
@@ -464,15 +519,46 @@ max_tokens: 2048
 
 ### React Native (app.json)
 - Version: 1.0.0
-- Build: Auto-increment on EAS Build
+- Build: 41 (manually increment before each TestFlight submission)
 
 ### Legacy iOS (project.pbxproj)
 - Marketing Version: 1.0
-- Build Number: 25
+- Build Number: 25 (deprecated - use React Native build)
 
 ---
 
 ## Common Issues
+
+### Blank Screen After Build
+**Problem:** App shows blue background with no content visible.
+
+**Causes & Fixes:**
+1. **NativeWind JSX Transform Conflict** - If using `jsxImportSource: "nativewind"` in babel.config.js but components use StyleSheet, remove it:
+   ```javascript
+   // babel.config.js - CORRECT (no NativeWind)
+   module.exports = function (api) {
+     api.cache(true);
+     return {
+       presets: ["babel-preset-expo"],
+       plugins: ["react-native-reanimated/plugin"],
+     };
+   };
+   ```
+
+2. **New Architecture (Fabric) Compatibility** - Disable if having issues:
+   ```json
+   // app.json
+   "newArchEnabled": false
+   ```
+
+3. **Reanimated Entering Animations** - The `entering={FadeInUp...}` animations may not run correctly, leaving components invisible. Replace with static Views for debugging.
+
+4. **Metro Config** - Remove NativeWind wrapper if not using className styling:
+   ```javascript
+   // metro.config.js
+   const { getDefaultConfig } = require("expo/metro-config");
+   module.exports = getDefaultConfig(__dirname);
+   ```
 
 ### Expo Go SDK Mismatch
 Use matching Expo Go version or create a development build:
@@ -481,13 +567,66 @@ npx expo run:ios
 ```
 
 ### RevenueCat Plugin Error
-The react-native-purchases plugin requires a development build, not Expo Go.
+The react-native-purchases plugin requires a development build, not Expo Go. Made defensive with lazy imports to prevent crashes:
+```typescript
+// lib/purchases.ts uses try/catch for require()
+let Purchases: any = null;
+try {
+  Purchases = require('react-native-purchases').default;
+} catch (e) {
+  console.warn('react-native-purchases not available');
+}
+```
 
 ### Reanimated Worklets Mismatch
 Version mismatch between JS and native - requires development build.
 
 ### TestFlight Build Number Error
-Increment `CURRENT_PROJECT_VERSION` in `ios/App/App.xcodeproj/project.pbxproj`.
+**Problem:** "Redundant Binary Upload" error.
+
+**Solution:** Increment `buildNumber` in `RecipePilotRN/app.json` and update `CLAUDE.md`:
+```json
+"ios": {
+  "buildNumber": "42"  // Current is 41, increment for next build
+}
+```
+
+Also update the `**Current Build:**` line at the top of this file.
+
+### Environment Variables Not Working in Build
+**Problem:** Supabase calls fail because `process.env.EXPO_PUBLIC_*` is undefined in production builds.
+
+**Solution:**
+1. Create `app.config.js` that exposes env vars via `Constants.expoConfig.extra`
+2. Use `expo-constants` in code instead of `process.env` directly
+3. Add hardcoded fallbacks in `app.config.js` for reliability
+
+```javascript
+// app.config.js
+module.exports = ({ config }) => ({
+  ...config,
+  extra: {
+    ...config.extra,
+    supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://xxx.supabase.co',
+    supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'eyJxxx',
+  },
+});
+
+// In code
+import Constants from 'expo-constants';
+const extra = Constants.expoConfig?.extra || {};
+const SUPABASE_URL = extra.supabaseUrl || '';
+```
+
+### react-native-worklets/plugin Not Found
+**Problem:** Build fails with "Cannot find module 'react-native-worklets/plugin'".
+
+**Solution:** The app needs react-native-worklets as a peer dependency. Ensure it's in package.json:
+```json
+"react-native-worklets": "^0.2.0"
+```
+
+But use `react-native-reanimated/plugin` in babel.config.js (NOT react-native-worklets/plugin).
 
 ---
 

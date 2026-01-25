@@ -14,15 +14,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { Feather } from '@expo/vector-icons';
 import Animated, {
-  FadeInUp,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
+  FadeIn,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 
-import { Colors, Gradients, Shadows } from '@/theme';
-import { Message, Recipe, WorldRegion } from '@/types';
+import { Colors, Gradients, Shadows, EditorialColors } from '@/theme';
+import { Message, Recipe, WorldRegion, WORLD_REGIONS } from '@/types';
 import { hapticLight } from '@/lib/haptics';
 
 import MessageBubble, { LoadingBubble } from './MessageBubble';
@@ -56,6 +56,9 @@ export default function ChatInterface({
   const isDark = colorScheme === 'dark';
   const colors = isDark ? Colors.dark : Colors.light;
   const insets = useSafeAreaInsets();
+
+  // Tab bar height (matches (tabs)/_layout.tsx)
+  const TAB_BAR_HEIGHT = Platform.OS === 'ios' ? 88 : 65;
 
   const [input, setInput] = useState('');
   const flatListRef = useRef<FlatList>(null);
@@ -107,21 +110,23 @@ export default function ChatInterface({
   );
 
   const renderMessage = useCallback(
-    ({ item }: { item: Message }) => (
+    ({ item, index }: { item: Message; index: number }) => (
       <MessageBubble
         message={item}
         renderRecipeCard={renderRecipeCard}
+        index={index}
       />
     ),
     [renderRecipeCard]
   );
 
-  const regionName = selectedRegion === 'all'
+  // Get region info for display
+  const regionInfo = selectedRegion === 'all'
     ? null
-    : selectedRegion.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    : WORLD_REGIONS.find(r => r.id === selectedRegion);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Messages or Empty State */}
       {messages.length === 0 ? (
         <QuickPrompts
@@ -136,57 +141,90 @@ export default function ChatInterface({
           renderItem={renderMessage}
           contentContainerStyle={[
             styles.messagesList,
-            { paddingBottom: 20 },
+            { paddingBottom: 24 },
           ]}
           showsVerticalScrollIndicator={false}
           keyboardDismissMode="interactive"
           ListFooterComponent={isLoading ? <LoadingBubble /> : null}
+          ItemSeparatorComponent={() => <View style={styles.messageSeparator} />}
         />
       )}
 
-      {/* Input Area */}
-      <Animated.View
-        entering={FadeInUp.duration(300)}
+      {/* Input Area - Warm editorial styling */}
+      <View
         style={[
           styles.inputWrapper,
-          { paddingBottom: Math.max(insets.bottom, 16) },
+          {
+            paddingBottom: TAB_BAR_HEIGHT + 8,
+            borderTopColor: colors.borderLight,
+          },
         ]}
       >
         {Platform.OS === 'ios' && (
           <BlurView
-            intensity={60}
+            intensity={80}
             tint={isDark ? 'dark' : 'light'}
             style={StyleSheet.absoluteFill}
           />
         )}
 
+        {/* Warm cream overlay for input area */}
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              backgroundColor: isDark
+                ? EditorialColors.glassWarmDark
+                : EditorialColors.glassWarmLight
+            }
+          ]}
+        />
+
         <View
           style={[
             styles.inputContainer,
             {
-              backgroundColor: Platform.OS === 'android' ? colors.card : 'transparent',
+              backgroundColor: Platform.OS === 'android'
+                ? (isDark ? colors.card : colors.cardElevated)
+                : 'transparent',
             },
           ]}
         >
-          {/* Region Indicator */}
-          {regionName && (
-            <View style={[styles.regionIndicator, { backgroundColor: colors.primary + '10' }]}>
-              <Text style={styles.regionEmoji}>🎯</Text>
-              <Text style={[styles.regionText, { color: colors.muted }]}>
-                Focused on {regionName} cuisine
+          {/* Region Indicator - Elegant badge style */}
+          {regionInfo && (
+            <Animated.View
+              entering={FadeIn.duration(200)}
+              style={[
+                styles.regionIndicator,
+                {
+                  backgroundColor: isDark
+                    ? colors.accent + '15'
+                    : colors.accent + '12',
+                  borderColor: colors.accent + '30',
+                }
+              ]}
+            >
+              <Text style={styles.regionFlag}>{regionInfo.flag}</Text>
+              <Text style={[styles.regionText, { color: colors.accent }]}>
+                {regionInfo.name} Cuisine
               </Text>
-            </View>
+            </Animated.View>
           )}
 
           <View style={styles.inputRow}>
-            {/* Text Input */}
+            {/* Text Input - Warm cream tint */}
             <View
               style={[
                 styles.textInputContainer,
                 {
-                  backgroundColor: colors.glassBackground,
-                  borderColor: colors.glassBorder,
+                  backgroundColor: isDark
+                    ? 'rgba(37, 32, 25, 0.8)'
+                    : 'rgba(255, 253, 251, 0.9)',
+                  borderColor: isDark
+                    ? EditorialColors.glassBorderWarmDark
+                    : EditorialColors.glassBorderWarmLight,
                 },
+                Shadows.sm,
               ]}
             >
               <TextInput
@@ -194,7 +232,7 @@ export default function ChatInterface({
                 style={[styles.textInput, { color: colors.foreground }]}
                 value={input}
                 onChangeText={setInput}
-                placeholder="Ask me for a recipe..."
+                placeholder="Ask me about any recipe..."
                 placeholderTextColor={colors.muted}
                 multiline
                 maxLength={1000}
@@ -205,15 +243,20 @@ export default function ChatInterface({
               />
             </View>
 
-            {/* Voice Button */}
+            {/* Voice Button - Subtle styling */}
             <Pressable
               style={({ pressed }) => [
                 styles.voiceButton,
                 {
-                  backgroundColor: isPremium ? colors.primary : colors.glassBackground,
-                  borderColor: colors.glassBorder,
-                  transform: [{ scale: pressed ? 0.92 : 1 }],
+                  backgroundColor: isPremium
+                    ? colors.secondary + '20'
+                    : (isDark ? colors.card : colors.cardElevated),
+                  borderColor: isPremium
+                    ? colors.secondary + '40'
+                    : colors.borderLight,
+                  transform: [{ scale: pressed ? 0.94 : 1 }],
                 },
+                Shadows.sm,
               ]}
               onPress={handleVoiceInput}
               disabled={isLoading}
@@ -221,16 +264,16 @@ export default function ChatInterface({
               <Feather
                 name="mic"
                 size={20}
-                color={isPremium ? 'white' : colors.muted}
+                color={isPremium ? colors.secondary : colors.muted}
               />
               {!isPremium && (
-                <View style={[styles.premiumIndicator, { backgroundColor: colors.secondary }]}>
-                  <Text style={styles.premiumStar}>⭐</Text>
+                <View style={[styles.premiumBadge, { backgroundColor: colors.accent }]}>
+                  <Feather name="star" size={8} color="white" />
                 </View>
               )}
             </Pressable>
 
-            {/* Send Button */}
+            {/* Send Button - Terracotta gradient */}
             <Pressable
               onPress={handleSend}
               disabled={!input.trim() || isLoading}
@@ -238,7 +281,7 @@ export default function ChatInterface({
                 styles.sendButton,
                 (!input.trim() || isLoading) && styles.sendButtonDisabled,
                 input.trim() && !isLoading && Shadows.glowPrimary,
-                { transform: [{ scale: pressed && input.trim() ? 0.92 : 1 }] },
+                { transform: [{ scale: pressed && input.trim() ? 0.94 : 1 }] },
               ]}
             >
               <LinearGradient
@@ -247,12 +290,12 @@ export default function ChatInterface({
                 end={{ x: 1, y: 1 }}
                 style={styles.sendButtonGradient}
               >
-                <Feather name="send" size={20} color="white" />
+                <Feather name="send" size={18} color="white" />
               </LinearGradient>
             </Pressable>
           </View>
         </View>
-      </Animated.View>
+      </View>
     </View>
   );
 }
@@ -262,45 +305,51 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   messagesList: {
-    paddingTop: 16,
+    paddingTop: 20,
+    paddingHorizontal: 4,
+  },
+  messageSeparator: {
+    height: 8,
   },
   inputWrapper: {
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0, 0, 0, 0.05)',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
   },
   inputContainer: {
-    padding: 12,
-    paddingTop: 8,
+    padding: 14,
+    paddingTop: 10,
   },
   regionIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: 12,
-    marginBottom: 8,
+    borderRadius: 16,
+    marginBottom: 10,
     alignSelf: 'flex-start',
     gap: 6,
+    borderWidth: 1,
   },
-  regionEmoji: {
+  regionFlag: {
     fontSize: 14,
   },
   regionText: {
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: '600',
+    letterSpacing: 0.3,
   },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    gap: 8,
+    gap: 10,
   },
   textInputContainer: {
     flex: 1,
-    borderRadius: 20,
+    borderRadius: 22,
     borderWidth: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    minHeight: 44,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    minHeight: 46,
     maxHeight: 120,
     justifyContent: 'center',
   },
@@ -308,38 +357,36 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 22,
     maxHeight: 100,
+    fontWeight: '400',
   },
   voiceButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
   },
-  premiumIndicator: {
+  premiumBadge: {
     position: 'absolute',
-    top: -4,
-    right: -4,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+    top: -2,
+    right: -2,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  premiumStar: {
-    fontSize: 10,
-  },
   sendButton: {
-    borderRadius: 22,
+    borderRadius: 23,
     overflow: 'hidden',
   },
   sendButtonDisabled: {
-    opacity: 0.5,
+    opacity: 0.45,
   },
   sendButtonGradient: {
-    width: 44,
-    height: 44,
+    width: 46,
+    height: 46,
     alignItems: 'center',
     justifyContent: 'center',
   },

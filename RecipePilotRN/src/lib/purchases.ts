@@ -26,9 +26,9 @@ const PRODUCT_IDS = {
 // Entitlement ID
 const ENTITLEMENT_ID = 'premium';
 
-// RevenueCat API Keys (replace with actual keys)
-const REVENUECAT_API_KEY_IOS = 'appl_xxx';
-const REVENUECAT_API_KEY_ANDROID = 'goog_xxx';
+// RevenueCat API Keys
+const REVENUECAT_API_KEY_IOS = 'appl_OQnKoMJWXJCotYpzyhQoBCpVZlU';
+const REVENUECAT_API_KEY_ANDROID = 'goog_xxx'; // TODO: Add Android key when ready
 
 class PurchaseService {
   private initialized = false;
@@ -48,8 +48,8 @@ class PurchaseService {
         : REVENUECAT_API_KEY_ANDROID;
 
       // Don't initialize with placeholder keys
-      if (apiKey === 'appl_xxx' || apiKey === 'goog_xxx') {
-        console.warn('RevenueCat API keys not configured - purchases disabled');
+      if (apiKey.includes('_xxx')) {
+        console.warn('RevenueCat API key not configured for this platform - purchases disabled');
         return;
       }
 

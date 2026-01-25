@@ -1,6 +1,7 @@
 import { Platform, ViewStyle } from 'react-native';
 
 // Shadow presets for React Native
+// Culinary Editorial Theme - soft, sophisticated shadows
 // Note: Android uses elevation, iOS uses shadow properties
 
 export const Shadows = {
@@ -12,71 +13,158 @@ export const Shadows = {
     elevation: 0,
   } as ViewStyle,
 
+  // Standard shadows - warm tinted
   sm: {
-    shadowColor: '#000',
+    shadowColor: '#2d2420',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.04,
     shadowRadius: 2,
     elevation: 1,
   } as ViewStyle,
 
   md: {
-    shadowColor: '#000',
+    shadowColor: '#2d2420',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.06,
     shadowRadius: 8,
     elevation: 3,
   } as ViewStyle,
 
   lg: {
-    shadowColor: '#000',
+    shadowColor: '#2d2420',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 16,
     elevation: 5,
   } as ViewStyle,
 
   xl: {
-    shadowColor: '#000',
+    shadowColor: '#2d2420',
     shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.1,
     shadowRadius: 24,
     elevation: 8,
   } as ViewStyle,
 
-  // Glass shadows
-  glass: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
+  // Card shadows - refined, warm
+  card: {
+    shadowColor: '#2d2420',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+  } as ViewStyle,
+
+  cardHover: {
+    shadowColor: '#2d2420',
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 4,
+  } as ViewStyle,
+
+  cardElevated: {
+    shadowColor: '#2d2420',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 3,
+  } as ViewStyle,
+
+  // Editorial shadows - larger blur, lower opacity for magazine feel
+  editorial: {
+    shadowColor: '#2d2420',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.06,
+    shadowRadius: 32,
+    elevation: 6,
+  } as ViewStyle,
+
+  editorialCard: {
+    shadowColor: '#2d2420',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.04,
+    shadowRadius: 24,
+    elevation: 4,
+  } as ViewStyle,
+
+  editorialHover: {
+    shadowColor: '#2d2420',
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.08,
+    shadowRadius: 40,
+    elevation: 8,
+  } as ViewStyle,
+
+  // Glass shadows - soft and subtle
+  glass: {
+    shadowColor: '#2d2420',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.05,
     shadowRadius: 32,
     elevation: 4,
   } as ViewStyle,
 
   glassCard: {
-    shadowColor: '#000',
+    shadowColor: '#2d2420',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
+    shadowOpacity: 0.04,
     shadowRadius: 24,
     elevation: 3,
   } as ViewStyle,
 
-  // Glow effects (iOS only, Android uses elevation)
+  // Glow effects - terracotta, sage, and gold (iOS only, Android uses elevation)
   glowPrimary: Platform.select({
     ios: {
-      shadowColor: '#1a3a8f',
+      shadowColor: '#c45d3a',
       shadowOffset: { width: 0, height: 0 },
-      shadowOpacity: 0.4,
+      shadowOpacity: 0.35,
       shadowRadius: 12,
     },
     default: {
       elevation: 6,
+    },
+  }) as ViewStyle,
+
+  glowPrimarySubtle: Platform.select({
+    ios: {
+      shadowColor: '#c45d3a',
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.2,
+      shadowRadius: 16,
+    },
+    default: {
+      elevation: 4,
     },
   }) as ViewStyle,
 
   glowSecondary: Platform.select({
     ios: {
-      shadowColor: '#f97316',
+      shadowColor: '#7d9a78',
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.3,
+      shadowRadius: 12,
+    },
+    default: {
+      elevation: 6,
+    },
+  }) as ViewStyle,
+
+  glowSecondarySubtle: Platform.select({
+    ios: {
+      shadowColor: '#7d9a78',
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.18,
+      shadowRadius: 16,
+    },
+    default: {
+      elevation: 4,
+    },
+  }) as ViewStyle,
+
+  glowAccent: Platform.select({
+    ios: {
+      shadowColor: '#d4a574',
       shadowOffset: { width: 0, height: 0 },
       shadowOpacity: 0.35,
       shadowRadius: 12,
@@ -86,9 +174,35 @@ export const Shadows = {
     },
   }) as ViewStyle,
 
+  glowAccentSubtle: Platform.select({
+    ios: {
+      shadowColor: '#d4a574',
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.2,
+      shadowRadius: 16,
+    },
+    default: {
+      elevation: 4,
+    },
+  }) as ViewStyle,
+
+  // Warm glow for images/cards
+  glowWarm: Platform.select({
+    ios: {
+      shadowColor: '#d4a574',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.25,
+      shadowRadius: 20,
+    },
+    default: {
+      elevation: 5,
+    },
+  }) as ViewStyle,
+
+  // Legacy alias for compatibility
   glowRose: Platform.select({
     ios: {
-      shadowColor: '#ef4444',
+      shadowColor: '#c45d3a',
       shadowOffset: { width: 0, height: 0 },
       shadowOpacity: 0.35,
       shadowRadius: 12,
@@ -97,6 +211,34 @@ export const Shadows = {
       elevation: 6,
     },
   }) as ViewStyle,
+
+  // Button shadows - refined, subtle
+  button: {
+    shadowColor: '#2d2420',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
+  } as ViewStyle,
+
+  buttonPressed: {
+    shadowColor: '#2d2420',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
+  } as ViewStyle,
+
+  // Inner shadow effect (simulated with border for RN)
+  innerLight: {
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  } as ViewStyle,
+
+  innerDark: {
+    borderWidth: 1,
+    borderColor: 'rgba(45, 36, 32, 0.05)',
+  } as ViewStyle,
 };
 
 export type ShadowKey = keyof typeof Shadows;

@@ -1,27 +1,56 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 import { Recipe, WorldRegion } from '@/types';
 
-// Supabase configuration
-const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
-const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
+// Supabase configuration - use Constants.expoConfig.extra for reliable access in builds
+const extra = Constants.expoConfig?.extra || {};
+const SUPABASE_URL = extra.supabaseUrl || process.env.EXPO_PUBLIC_SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = extra.supabaseAnonKey || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
+
+// Debug logging for troubleshooting (only in dev)
+if (__DEV__) {
+  console.log('Supabase URL configured:', SUPABASE_URL ? 'Yes' : 'No');
+  console.log('Supabase Anon Key configured:', SUPABASE_ANON_KEY ? 'Yes' : 'No');
+}
 
 // Lazy initialization to avoid build-time errors
 let supabaseInstance: SupabaseClient | null = null;
+let initializationError: Error | null = null;
+
+export function isSupabaseConfigured(): boolean {
+  return Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+}
 
 export function getSupabase(): SupabaseClient {
+  if (initializationError) {
+    throw initializationError;
+  }
+
   if (!supabaseInstance) {
     if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-      throw new Error('Supabase environment variables are not configured');
+      initializationError = new Error(
+        'Supabase environment variables are not configured. ' +
+        'Please set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY.'
+      );
+      throw initializationError;
     }
-    supabaseInstance = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: {
-        storage: AsyncStorage,
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: false,
-      },
-    });
+
+    try {
+      supabaseInstance = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: {
+          storage: AsyncStorage,
+          autoRefreshToken: true,
+          persistSession: true,
+          detectSessionInUrl: false,
+        },
+      });
+    } catch (error) {
+      initializationError = error instanceof Error
+        ? error
+        : new Error('Failed to initialize Supabase client');
+      throw initializationError;
+    }
   }
   return supabaseInstance;
 }
@@ -46,7 +75,7 @@ export async function sendChatMessageViaSupabase(
       body: {
         message,
         region,
-        conversationHistory,
+        history: conversationHistory,
       },
     });
 
@@ -55,7 +84,12 @@ export async function sendChatMessageViaSupabase(
       throw error;
     }
 
-    return data as ChatResponse;
+    // Edge function returns { response, recipe } - add isDemo: false
+    return {
+      response: data.response,
+      recipe: data.recipe || null,
+      isDemo: false,
+    };
   } catch (error) {
     console.error('Error calling Supabase Edge Function:', error);
     throw error;

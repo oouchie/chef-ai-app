@@ -12,24 +12,23 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
   withTiming,
-  interpolate,
   runOnJS,
   FadeIn,
   FadeInLeft,
   FadeOut,
+  SlideInLeft,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
-import { Colors } from '@/theme';
-import { Shadows } from '@/theme';
+import { Colors, Gradients, Shadows } from '@/theme';
 import { ChatSession } from '@/types';
 import { hapticLight, hapticMedium } from '@/lib/haptics';
-import { GradientButton } from '@/components/ui';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SIDEBAR_WIDTH = Math.min(320, SCREEN_WIDTH * 0.85);
@@ -42,6 +41,36 @@ interface SidebarProps {
   onSelectSession: (sessionId: string) => void;
   onNewChat: () => void;
   onDeleteSession: (sessionId: string) => void;
+}
+
+// Helper to group sessions by date
+function groupSessionsByDate(sessions: ChatSession[]) {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const yesterday = today - 86400000;
+  const weekAgo = today - 7 * 86400000;
+
+  const groups: { title: string; data: ChatSession[] }[] = [
+    { title: 'Today', data: [] },
+    { title: 'Yesterday', data: [] },
+    { title: 'This Week', data: [] },
+    { title: 'Earlier', data: [] },
+  ];
+
+  sessions.forEach((session) => {
+    const sessionDate = new Date(session.updatedAt).setHours(0, 0, 0, 0);
+    if (sessionDate >= today) {
+      groups[0].data.push(session);
+    } else if (sessionDate >= yesterday) {
+      groups[1].data.push(session);
+    } else if (sessionDate >= weekAgo) {
+      groups[2].data.push(session);
+    } else {
+      groups[3].data.push(session);
+    }
+  });
+
+  return groups.filter((g) => g.data.length > 0);
 }
 
 export default function Sidebar({
@@ -64,10 +93,10 @@ export default function Sidebar({
   // Update animation values when isOpen changes
   React.useEffect(() => {
     if (isOpen) {
-      translateX.value = withSpring(0, { damping: 25, stiffness: 200 });
-      backdropOpacity.value = withTiming(1, { duration: 200 });
+      translateX.value = withSpring(0, { damping: 28, stiffness: 220 });
+      backdropOpacity.value = withTiming(1, { duration: 250 });
     } else {
-      translateX.value = withSpring(-SIDEBAR_WIDTH, { damping: 25, stiffness: 200 });
+      translateX.value = withSpring(-SIDEBAR_WIDTH, { damping: 28, stiffness: 220 });
       backdropOpacity.value = withTiming(0, { duration: 200 });
     }
   }, [isOpen]);
@@ -81,12 +110,12 @@ export default function Sidebar({
       }
     })
     .onEnd((event) => {
-      if (event.translationX < -100 || event.velocityX < -500) {
-        translateX.value = withSpring(-SIDEBAR_WIDTH, { damping: 25, stiffness: 200 });
+      if (event.translationX < -80 || event.velocityX < -400) {
+        translateX.value = withSpring(-SIDEBAR_WIDTH, { damping: 28, stiffness: 220 });
         backdropOpacity.value = withTiming(0, { duration: 200 });
         runOnJS(onClose)();
       } else {
-        translateX.value = withSpring(0, { damping: 25, stiffness: 200 });
+        translateX.value = withSpring(0, { damping: 28, stiffness: 220 });
       }
     });
 
@@ -99,10 +128,15 @@ export default function Sidebar({
     pointerEvents: backdropOpacity.value > 0 ? 'auto' : 'none',
   }));
 
-  // Sort sessions by updatedAt (most recent first)
+  // Sort and group sessions
   const sortedSessions = useMemo(
     () => [...sessions].sort((a, b) => b.updatedAt - a.updatedAt),
     [sessions]
+  );
+
+  const groupedSessions = useMemo(
+    () => groupSessionsByDate(sortedSessions),
+    [sortedSessions]
   );
 
   const handleSessionPress = useCallback(
@@ -121,65 +155,64 @@ export default function Sidebar({
     [onDeleteSession]
   );
 
+  const handleNewChat = useCallback(() => {
+    hapticLight();
+    onNewChat();
+  }, [onNewChat]);
+
   const renderSession = useCallback(
     ({ item, index }: { item: ChatSession; index: number }) => {
       const isActive = item.id === currentSessionId;
       const messagePreview =
         item.messages.length > 0
-          ? item.messages[item.messages.length - 1].content.slice(0, 50) + '...'
+          ? item.messages[item.messages.length - 1].content.slice(0, 60)
           : 'No messages yet';
 
       return (
-        <Animated.View entering={FadeInLeft.delay(index * 50).duration(200)}>
+        <Animated.View entering={FadeInLeft.delay(index * 30).duration(200)}>
           <TouchableOpacity
             style={[
               styles.sessionItem,
               {
                 backgroundColor: isActive
-                  ? colors.primary + '15'
+                  ? colors.primary + '12'
                   : 'transparent',
-                borderLeftColor: isActive ? colors.primary : 'transparent',
               },
             ]}
             onPress={() => handleSessionPress(item.id)}
-            activeOpacity={0.7}
+            activeOpacity={0.6}
           >
             <View style={styles.sessionContent}>
-              <View style={styles.sessionHeader}>
-                <Feather
-                  name="message-circle"
-                  size={18}
-                  color={isActive ? colors.primary : colors.muted}
-                />
-                <Text
-                  style={[
-                    styles.sessionTitle,
-                    {
-                      color: isActive ? colors.primary : colors.foreground,
-                      fontWeight: isActive ? '600' : '500',
-                    },
-                  ]}
-                  numberOfLines={1}
-                >
-                  {item.title}
-                </Text>
-              </View>
+              <Text
+                style={[
+                  styles.sessionTitle,
+                  {
+                    color: isActive ? colors.primary : colors.foreground,
+                    fontWeight: isActive ? '600' : '500',
+                  },
+                ]}
+                numberOfLines={1}
+              >
+                {item.title}
+              </Text>
               <Text
                 style={[styles.sessionPreview, { color: colors.muted }]}
-                numberOfLines={1}
+                numberOfLines={2}
               >
                 {messagePreview}
               </Text>
-              <Text style={[styles.sessionDate, { color: colors.muted }]}>
-                {new Date(item.updatedAt).toLocaleDateString()}
-              </Text>
             </View>
+
+            {/* Swipe hint indicator */}
             <TouchableOpacity
-              style={styles.deleteButton}
+              style={[
+                styles.deleteButton,
+                { backgroundColor: colors.error + '15' }
+              ]}
               onPress={() => handleDeletePress(item.id)}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Feather name="trash-2" size={16} color={colors.muted} />
+              <Feather name="trash-2" size={14} color={colors.error} />
             </TouchableOpacity>
           </TouchableOpacity>
         </Animated.View>
@@ -188,13 +221,24 @@ export default function Sidebar({
     [currentSessionId, colors, handleSessionPress, handleDeletePress]
   );
 
+  const renderSectionHeader = useCallback(
+    (title: string) => (
+      <View style={styles.sectionHeader}>
+        <Text style={[styles.sectionTitle, { color: colors.muted }]}>
+          {title}
+        </Text>
+      </View>
+    ),
+    [colors]
+  );
+
   if (!isOpen && translateX.value === -SIDEBAR_WIDTH) {
     return null;
   }
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop with warm tint */}
       <Animated.View style={[styles.backdrop, backdropStyle]}>
         <TouchableOpacity
           style={StyleSheet.absoluteFill}
@@ -213,25 +257,32 @@ export default function Sidebar({
             Shadows.xl,
           ]}
         >
+          {/* Background */}
           {Platform.OS === 'ios' && (
             <BlurView
-              intensity={80}
+              intensity={90}
               tint={isDark ? 'dark' : 'light'}
               style={StyleSheet.absoluteFill}
             />
           )}
 
+          {/* Warm cream/espresso overlay */}
+          <View
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                backgroundColor: isDark
+                  ? 'rgba(26, 22, 20, 0.92)'
+                  : 'rgba(250, 248, 245, 0.95)',
+              },
+            ]}
+          />
+
           <View
             style={[
               styles.sidebarContent,
               {
-                backgroundColor:
-                  Platform.OS === 'android'
-                    ? isDark
-                      ? 'rgba(20, 20, 20, 0.98)'
-                      : 'rgba(255, 255, 255, 0.98)'
-                    : 'transparent',
-                paddingTop: insets.top + 20,
+                paddingTop: insets.top + 16,
                 paddingBottom: insets.bottom + 20,
               },
             ]}
@@ -241,33 +292,52 @@ export default function Sidebar({
               <Text style={[styles.sidebarTitle, { color: colors.foreground }]}>
                 Chats
               </Text>
-              <TouchableOpacity onPress={onClose}>
-                <Feather name="x" size={24} color={colors.muted} />
+              <TouchableOpacity
+                onPress={onClose}
+                style={[styles.closeButton, { backgroundColor: colors.card }]}
+              >
+                <Feather name="x" size={18} color={colors.muted} />
               </TouchableOpacity>
             </View>
 
-            {/* New Chat Button */}
-            <View style={styles.newChatContainer}>
-              <GradientButton
-                title="New Chat"
-                onPress={onNewChat}
-                icon={<Feather name="plus" size={20} color="white" />}
-                fullWidth
-              />
-            </View>
+            {/* New Chat Button with terracotta gradient */}
+            <TouchableOpacity
+              onPress={handleNewChat}
+              style={styles.newChatContainer}
+              activeOpacity={0.85}
+            >
+              <LinearGradient
+                colors={Gradients.primary}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[styles.newChatButton, Shadows.glowPrimary]}
+              >
+                <Feather name="plus" size={20} color="white" />
+                <Text style={styles.newChatText}>New Chat</Text>
+              </LinearGradient>
+            </TouchableOpacity>
 
-            {/* Sessions List */}
+            {/* Sessions List with date grouping */}
             <FlatList
-              data={sortedSessions}
-              keyExtractor={(item) => item.id}
-              renderItem={renderSession}
+              data={groupedSessions}
+              keyExtractor={(item) => item.title}
+              renderItem={({ item: group }) => (
+                <View>
+                  {renderSectionHeader(group.title)}
+                  {group.data.map((session, index) =>
+                    renderSession({ item: session, index })
+                  )}
+                </View>
+              )}
               contentContainerStyle={styles.sessionsList}
               showsVerticalScrollIndicator={false}
               ListEmptyComponent={
                 <View style={styles.emptyState}>
-                  <Feather name="message-circle" size={40} color={colors.muted} />
-                  <Text style={[styles.emptyText, { color: colors.muted }]}>
-                    No chat history yet
+                  <View style={[styles.emptyIconContainer, { backgroundColor: colors.primary + '15' }]}>
+                    <Feather name="message-circle" size={32} color={colors.primary} />
+                  </View>
+                  <Text style={[styles.emptyText, { color: colors.foreground }]}>
+                    No chat history
                   </Text>
                   <Text style={[styles.emptySubtext, { color: colors.muted }]}>
                     Start a conversation to see it here
@@ -285,7 +355,7 @@ export default function Sidebar({
 const styles = StyleSheet.create({
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(26, 22, 20, 0.4)',
     zIndex: 998,
   },
   sidebar: {
@@ -298,72 +368,109 @@ const styles = StyleSheet.create({
   },
   sidebarContent: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
   },
   sidebarHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
   },
   sidebarTitle: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: '700',
+    letterSpacing: -0.5,
+    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+  },
+  closeButton: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 10,
   },
   newChatContainer: {
-    marginBottom: 20,
+    marginBottom: 24,
+  },
+  newChatButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 14,
+    gap: 10,
+  },
+  newChatText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 0.2,
   },
   sessionsList: {
     paddingBottom: 20,
   },
+  sectionHeader: {
+    paddingTop: 16,
+    paddingBottom: 8,
+    paddingHorizontal: 4,
+  },
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
   sessionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
     borderRadius: 12,
-    marginBottom: 8,
-    borderLeftWidth: 3,
+    marginBottom: 4,
   },
   sessionContent: {
     flex: 1,
-    marginRight: 10,
-  },
-  sessionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 4,
+    marginRight: 12,
   },
   sessionTitle: {
     fontSize: 15,
-    flex: 1,
+    marginBottom: 4,
+    letterSpacing: -0.2,
   },
   sessionPreview: {
     fontSize: 13,
-    marginBottom: 4,
-    marginLeft: 26,
-  },
-  sessionDate: {
-    fontSize: 11,
-    marginLeft: 26,
+    lineHeight: 18,
   },
   deleteButton: {
-    padding: 8,
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: 8,
   },
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 60,
+    paddingHorizontal: 20,
+  },
+  emptyIconContainer: {
+    width: 72,
+    height: 72,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
   },
   emptyText: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginTop: 16,
+    fontSize: 17,
+    fontWeight: '600',
+    marginBottom: 6,
   },
   emptySubtext: {
     fontSize: 14,
-    marginTop: 4,
     textAlign: 'center',
+    lineHeight: 20,
   },
 });

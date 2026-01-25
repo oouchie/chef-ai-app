@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
   useColorScheme,
   Image,
   Platform,
@@ -12,12 +11,15 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { Feather } from '@expo/vector-icons';
-import Animated, { FadeIn, FadeInRight } from 'react-native-reanimated';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
 
-import { Colors } from '@/theme';
+import { Colors, Shadows } from '@/theme';
 import { WorldRegion, WORLD_REGIONS } from '@/types';
 import { hapticLight, hapticSelection } from '@/lib/haptics';
-import { GlassIconButton } from '@/components/ui/GlassButton';
 
 interface HeaderProps {
   onMenuPress: () => void;
@@ -43,202 +45,111 @@ export default function Header({
   const colors = isDark ? Colors.dark : Colors.light;
   const insets = useSafeAreaInsets();
 
-  const [showRegions, setShowRegions] = useState(false);
-
-  const handleRegionSelect = useCallback(
-    (region: WorldRegion | 'all') => {
-      hapticSelection();
-      onRegionChange(region);
-    },
-    [onRegionChange]
-  );
-
-  const toggleRegions = useCallback(() => {
-    hapticLight();
-    setShowRegions((prev) => !prev);
-  }, []);
-
   const selectedRegionInfo =
     selectedRegion === 'all'
       ? { name: 'All Cuisines', flag: '🌎' }
       : WORLD_REGIONS.find((r) => r.id === selectedRegion);
 
+  // Animation for new chat button
+  const newChatScale = useSharedValue(1);
+  const newChatAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: newChatScale.value }],
+  }));
+
+  const handleNewChatPress = useCallback(() => {
+    hapticLight();
+    newChatScale.value = withSpring(0.9, { damping: 15 });
+    setTimeout(() => {
+      newChatScale.value = withSpring(1, { damping: 15 });
+    }, 100);
+    onNewChat();
+  }, [onNewChat]);
+
   return (
     <View style={styles.container}>
-      {/* Main Header */}
       <View style={[styles.headerWrapper, { paddingTop: insets.top }]}>
+        {/* Warm glass background */}
         {Platform.OS === 'ios' && (
           <BlurView
-            intensity={60}
+            intensity={80}
             tint={isDark ? 'dark' : 'light'}
             style={StyleSheet.absoluteFill}
           />
         )}
-        <Animated.View
-          entering={FadeIn.duration(300)}
-          style={[
-            styles.header,
-            {
-              backgroundColor: Platform.OS === 'android' ? colors.card : 'transparent',
-            },
-          ]}
-        >
-          {/* Left: Menu Button - fixed width for balance */}
-          <View style={styles.leftButtons}>
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={onMenuPress}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <Feather name="menu" size={24} color={colors.foreground} />
-            </TouchableOpacity>
-          </View>
 
-          {/* Center: Logo and Region */}
-          <TouchableOpacity style={styles.titleContainer} onPress={toggleRegions}>
-            <View style={styles.logoRow}>
-              <Text style={[styles.title, { color: colors.foreground }]}>RecipePilot</Text>
-              <Feather
-                name={showRegions ? 'chevron-up' : 'chevron-down'}
-                size={18}
-                color={colors.muted}
-                style={styles.chevron}
-              />
-            </View>
-            <View style={styles.regionBadge}>
-              <Text style={styles.regionFlag}>{selectedRegionInfo?.flag}</Text>
-              <Text style={[styles.regionName, { color: colors.muted }]}>
-                {selectedRegionInfo?.name}
-              </Text>
-            </View>
+        {/* Warm cream overlay for editorial feel */}
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              backgroundColor: isDark
+                ? 'rgba(26, 22, 20, 0.85)'
+                : 'rgba(250, 248, 245, 0.85)'
+            }
+          ]}
+        />
+
+        <View style={styles.header}>
+          {/* Left: Subtle menu icon */}
+          <TouchableOpacity
+            style={styles.menuButton}
+            onPress={() => {
+              hapticLight();
+              onMenuPress();
+            }}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          >
+            <Feather
+              name="menu"
+              size={22}
+              color={colors.muted}
+            />
           </TouchableOpacity>
 
-          {/* Right: Action Buttons - fixed width for balance */}
-          <View style={styles.rightButtons}>
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={onToolsPress}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <Feather name="tool" size={22} color={colors.foreground} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={onNewChat}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <Feather name="edit" size={22} color={colors.primary} />
-            </TouchableOpacity>
+          {/* Center: Logo with elegant typography */}
+          <View style={styles.centerContainer}>
+            <Text style={[styles.logoText, { color: colors.foreground }]}>
+              RecipePilot
+            </Text>
           </View>
-        </Animated.View>
-      </View>
 
-      {/* Region Chips */}
-      {showRegions && (
-        <Animated.View
-          entering={FadeIn.duration(200)}
-          style={[
-            styles.regionChipsWrapper,
-            {
-              backgroundColor: Platform.OS === 'ios' ? 'transparent' : colors.card,
-            },
-          ]}
-        >
-          {Platform.OS === 'ios' && (
-            <BlurView
-              intensity={40}
-              tint={isDark ? 'dark' : 'light'}
-              style={StyleSheet.absoluteFill}
-            />
-          )}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.regionChipsContent}
-          >
-            {/* All Regions */}
+          {/* Right: Tools + New Chat */}
+          <View style={styles.rightActions}>
             <TouchableOpacity
-              style={[
-                styles.regionChip,
-                selectedRegion === 'all' && styles.regionChipActive,
-                {
-                  backgroundColor:
-                    selectedRegion === 'all' ? colors.primary : colors.card,
-                  borderColor: selectedRegion === 'all' ? colors.primary : colors.border,
-                },
-              ]}
-              onPress={() => handleRegionSelect('all')}
+              style={[styles.actionButton, { backgroundColor: colors.card }]}
+              onPress={() => {
+                hapticLight();
+                onToolsPress();
+              }}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Text style={styles.regionChipFlag}>🌎</Text>
-              <Text
+              <Feather name="sliders" size={18} color={colors.muted} />
+            </TouchableOpacity>
+
+            <Animated.View style={newChatAnimatedStyle}>
+              <TouchableOpacity
                 style={[
-                  styles.regionChipText,
-                  { color: selectedRegion === 'all' ? 'white' : colors.foreground },
+                  styles.newChatButton,
+                  { backgroundColor: colors.primary },
+                  Shadows.glowPrimary,
                 ]}
+                onPress={handleNewChatPress}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
-                All
-              </Text>
-            </TouchableOpacity>
-
-            {/* Region Chips */}
-            {WORLD_REGIONS.map((region, index) => (
-              <Animated.View
-                key={region.id}
-                entering={FadeInRight.delay(index * 30).duration(200)}
-              >
-                <TouchableOpacity
-                  style={[
-                    styles.regionChip,
-                    selectedRegion === region.id && styles.regionChipActive,
-                    {
-                      backgroundColor:
-                        selectedRegion === region.id ? colors.primary : colors.card,
-                      borderColor:
-                        selectedRegion === region.id ? colors.primary : colors.border,
-                    },
-                  ]}
-                  onPress={() => handleRegionSelect(region.id)}
-                >
-                  <Text style={styles.regionChipFlag}>{region.flag}</Text>
-                  <Text
-                    style={[
-                      styles.regionChipText,
-                      {
-                        color:
-                          selectedRegion === region.id ? 'white' : colors.foreground,
-                      },
-                    ]}
-                  >
-                    {region.name}
-                  </Text>
-                </TouchableOpacity>
-              </Animated.View>
-            ))}
-          </ScrollView>
-
-          {/* Quick Action Buttons */}
-          <View style={[styles.quickActions, { borderTopColor: colors.border }]}>
-            <TouchableOpacity
-              style={[styles.quickActionButton, { backgroundColor: colors.card }]}
-              onPress={onMealPlannerPress}
-            >
-              <Feather name="calendar" size={18} color={colors.primary} />
-              <Text style={[styles.quickActionText, { color: colors.foreground }]}>
-                Meal Plan
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.quickActionButton, { backgroundColor: colors.card }]}
-              onPress={onRestaurantPress}
-            >
-              <Feather name="coffee" size={18} color={colors.secondary} />
-              <Text style={[styles.quickActionText, { color: colors.foreground }]}>
-                Restaurants
-              </Text>
-            </TouchableOpacity>
+                <Feather name="plus" size={18} color="#ffffff" />
+              </TouchableOpacity>
+            </Animated.View>
           </View>
-        </Animated.View>
-      )}
+        </View>
+
+        {/* Subtle bottom border */}
+        <View
+          style={[
+            styles.headerBorder,
+            { backgroundColor: colors.border }
+          ]}
+        />
+      </View>
     </View>
   );
 }
@@ -254,100 +165,49 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-  },
-  leftButtons: {
-    width: 80,
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-  },
-  iconButton: {
-    padding: 8,
-  },
-  titleContainer: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  logoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  chevron: {
-    marginLeft: 4,
-  },
-  regionBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 2,
-  },
-  regionFlag: {
-    fontSize: 14,
-  },
-  regionName: {
-    fontSize: 12,
-    marginLeft: 4,
-  },
-  rightButtons: {
-    width: 80,
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 4,
-  },
-  regionChipsWrapper: {
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.05)',
-  },
-  regionChipsContent: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    gap: 8,
+    minHeight: 52,
   },
-  regionChip: {
-    flexDirection: 'row',
+  menuButton: {
+    width: 40,
+    height: 40,
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 20,
-    borderWidth: 1,
-    marginRight: 8,
-  },
-  regionChipActive: {
-    elevation: 2,
-    shadowColor: '#1a3a8f',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-  },
-  regionChipFlag: {
-    fontSize: 16,
-    marginRight: 6,
-  },
-  regionChipText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  quickActions: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    gap: 10,
-    borderTopWidth: 1,
-  },
-  quickActionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 14,
+    justifyContent: 'center',
     borderRadius: 12,
-    gap: 6,
   },
-  quickActionText: {
-    fontSize: 14,
-    fontWeight: '500',
+  centerContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoText: {
+    fontSize: 20,
+    fontWeight: '600',
+    letterSpacing: -0.5,
+    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+  },
+  rightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  actionButton: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 10,
+  },
+  newChatButton: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 10,
+  },
+  headerBorder: {
+    height: StyleSheet.hairlineWidth,
+    opacity: 0.5,
   },
 });

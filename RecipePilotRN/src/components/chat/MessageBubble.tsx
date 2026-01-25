@@ -4,13 +4,10 @@ import {
   Text,
   StyleSheet,
   useColorScheme,
-  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import Animated, {
   FadeInUp,
-  FadeInDown,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
@@ -19,25 +16,34 @@ import Animated, {
   withDelay,
 } from 'react-native-reanimated';
 
-import { Colors, Gradients, Shadows } from '@/theme';
+import { Colors, Gradients, Shadows, EditorialColors } from '@/theme';
 import { Message, Recipe } from '@/types';
 
 interface MessageBubbleProps {
   message: Message;
   renderRecipeCard?: (recipe: Recipe) => React.ReactNode;
+  index?: number;
 }
 
-export default function MessageBubble({ message, renderRecipeCard }: MessageBubbleProps) {
+export default function MessageBubble({ message, renderRecipeCard, index = 0 }: MessageBubbleProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const colors = isDark ? Colors.dark : Colors.light;
 
   const isUser = message.role === 'user';
 
+  // Subtle fade-up animation with 300ms duration
+  const enteringAnimation = FadeInUp
+    .duration(300)
+    .delay(index * 50)
+    .springify()
+    .damping(18)
+    .stiffness(100);
+
   if (isUser) {
     return (
       <Animated.View
-        entering={FadeInUp.springify().damping(20).stiffness(90)}
+        entering={enteringAnimation}
         style={[styles.container, styles.userContainer]}
       >
         <LinearGradient
@@ -52,10 +58,10 @@ export default function MessageBubble({ message, renderRecipeCard }: MessageBubb
     );
   }
 
-  // Assistant message
+  // Assistant message - Clean editorial card style (no glass)
   return (
     <Animated.View
-      entering={FadeInUp.springify().damping(20).stiffness(90)}
+      entering={enteringAnimation}
       style={[styles.container, styles.assistantContainer]}
     >
       <View
@@ -63,54 +69,44 @@ export default function MessageBubble({ message, renderRecipeCard }: MessageBubb
           styles.bubble,
           styles.assistantBubble,
           {
-            backgroundColor: colors.glassBackgroundStrong,
-            borderColor: colors.glassBorder,
-            borderLeftColor: colors.primary,
+            backgroundColor: isDark ? colors.card : colors.assistantBubble,
+            borderColor: colors.borderLight,
           },
-          Shadows.glassCard,
+          Shadows.card,
         ]}
       >
-        {Platform.OS === 'ios' && (
-          <BlurView
-            intensity={25}
-            tint={isDark ? 'dark' : 'light'}
-            style={StyleSheet.absoluteFill}
-          />
-        )}
+        {/* Warm gold/terracotta left accent border */}
+        <View
+          style={[
+            styles.accentBorder,
+            { backgroundColor: isDark ? colors.accent : colors.primary }
+          ]}
+        />
 
-        {/* Header with avatar */}
-        <View style={[styles.header, { borderBottomColor: colors.border }]}>
-          <LinearGradient
-            colors={Gradients.primary}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.avatarGradient}
-          >
-            <Text style={styles.avatarEmoji}>👨‍🍳</Text>
-          </LinearGradient>
-          <Text style={[styles.assistantName, { color: colors.primary }]}>
-            RecipePilot
+        {/* Message content - Clean typography, no header */}
+        <View style={styles.contentContainer}>
+          <Text style={[styles.assistantText, { color: colors.foreground }]}>
+            {message.content}
           </Text>
+
+          {/* Recipe card if present */}
+          {message.recipe && renderRecipeCard && (
+            <View style={styles.recipeContainer}>
+              {renderRecipeCard(message.recipe)}
+            </View>
+          )}
         </View>
-
-        {/* Message content */}
-        <Text style={[styles.assistantText, { color: colors.foreground }]}>
-          {message.content}
-        </Text>
-
-        {/* Recipe card if present */}
-        {message.recipe && renderRecipeCard && (
-          <View style={styles.recipeContainer}>
-            {renderRecipeCard(message.recipe)}
-          </View>
-        )}
       </View>
     </Animated.View>
   );
 }
 
-// Animated dot component for loading
-function AnimatedDot({ delay, color }: { delay: number; color: string }) {
+// Animated dot component for loading - Terracotta themed
+function AnimatedDot({ delay, isPrimary }: { delay: number; isPrimary: boolean }) {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const colors = isDark ? Colors.dark : Colors.light;
+
   const scale = useSharedValue(1);
   const opacity = useSharedValue(0.4);
 
@@ -119,8 +115,8 @@ function AnimatedDot({ delay, color }: { delay: number; color: string }) {
       delay,
       withRepeat(
         withSequence(
-          withTiming(1.3, { duration: 300 }),
-          withTiming(1, { duration: 300 })
+          withTiming(1.4, { duration: 350 }),
+          withTiming(1, { duration: 350 })
         ),
         -1,
         false
@@ -130,8 +126,8 @@ function AnimatedDot({ delay, color }: { delay: number; color: string }) {
       delay,
       withRepeat(
         withSequence(
-          withTiming(1, { duration: 300 }),
-          withTiming(0.4, { duration: 300 })
+          withTiming(1, { duration: 350 }),
+          withTiming(0.4, { duration: 350 })
         ),
         -1,
         false
@@ -144,14 +140,19 @@ function AnimatedDot({ delay, color }: { delay: number; color: string }) {
     opacity: opacity.value,
   }));
 
+  // Terracotta color scheme for dots
+  const dotColor = isPrimary
+    ? colors.primary
+    : (isDark ? colors.accent : EditorialColors.gold);
+
   return (
     <Animated.View
-      style={[styles.dot, { backgroundColor: color }, animatedStyle]}
+      style={[styles.dot, { backgroundColor: dotColor }, animatedStyle]}
     />
   );
 }
 
-// Loading bubble component
+// Loading bubble component - Elegant, minimal
 export function LoadingBubble() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -159,51 +160,37 @@ export function LoadingBubble() {
 
   return (
     <Animated.View
-      entering={FadeInUp.springify().damping(20).stiffness(90)}
+      entering={FadeInUp.duration(300).springify().damping(18).stiffness(100)}
       style={[styles.container, styles.assistantContainer]}
     >
       <View
         style={[
           styles.bubble,
           styles.assistantBubble,
+          styles.loadingBubble,
           {
-            backgroundColor: colors.glassBackgroundStrong,
-            borderColor: colors.glassBorder,
-            borderLeftColor: colors.primary,
+            backgroundColor: isDark ? colors.card : colors.assistantBubble,
+            borderColor: colors.borderLight,
           },
-          Shadows.glassCard,
+          Shadows.card,
         ]}
       >
-        {Platform.OS === 'ios' && (
-          <BlurView
-            intensity={25}
-            tint={isDark ? 'dark' : 'light'}
-            style={StyleSheet.absoluteFill}
-          />
-        )}
+        {/* Warm accent border */}
+        <View
+          style={[
+            styles.accentBorder,
+            { backgroundColor: isDark ? colors.accent : colors.primary }
+          ]}
+        />
 
-        <View style={[styles.header, { borderBottomColor: colors.border }]}>
-          <LinearGradient
-            colors={Gradients.primary}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.avatarGradient}
-          >
-            <Text style={styles.avatarEmoji}>👨‍🍳</Text>
-          </LinearGradient>
-          <Text style={[styles.assistantName, { color: colors.primary }]}>
-            RecipePilot
-          </Text>
-        </View>
-
-        <View style={styles.loadingContainer}>
+        <View style={styles.loadingContent}>
           <View style={styles.dotsContainer}>
-            <AnimatedDot delay={0} color={colors.primary} />
-            <AnimatedDot delay={150} color={colors.primaryLight || colors.primary} />
-            <AnimatedDot delay={300} color={colors.secondary} />
+            <AnimatedDot delay={0} isPrimary={true} />
+            <AnimatedDot delay={120} isPrimary={false} />
+            <AnimatedDot delay={240} isPrimary={true} />
           </View>
           <Text style={[styles.loadingText, { color: colors.muted }]}>
-            Cooking up something delicious...
+            Preparing your recipe...
           </Text>
         </View>
       </View>
@@ -213,7 +200,7 @@ export function LoadingBubble() {
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 6,
+    marginVertical: 4,
     paddingHorizontal: 16,
   },
   userContainer: {
@@ -223,66 +210,59 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   bubble: {
-    maxWidth: '85%',
-    borderRadius: 20,
+    maxWidth: '88%',
+    borderRadius: 18,
     overflow: 'hidden',
   },
   userBubble: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
     borderBottomRightRadius: 6,
   },
   assistantBubble: {
     borderWidth: 1,
-    borderLeftWidth: 3,
+    borderLeftWidth: 0,
+    borderBottomLeftRadius: 6,
+    flexDirection: 'row',
+  },
+  loadingBubble: {
+    minWidth: 160,
+  },
+  accentBorder: {
+    width: 3,
+    borderTopLeftRadius: 18,
     borderBottomLeftRadius: 6,
   },
+  contentContainer: {
+    flex: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    paddingLeft: 14,
+  },
   userText: {
-    color: 'white',
+    color: '#faf8f5',
     fontSize: 16,
     lineHeight: 24,
     fontWeight: '500',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    paddingBottom: 10,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    gap: 10,
-  },
-  avatarGradient: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarEmoji: {
-    fontSize: 18,
-  },
-  assistantName: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
   assistantText: {
-    padding: 16,
-    paddingTop: 12,
     fontSize: 15,
-    lineHeight: 22,
+    lineHeight: 23,
+    fontWeight: '400',
   },
   recipeContainer: {
-    padding: 12,
-    paddingTop: 0,
+    marginTop: 14,
   },
-  loadingContainer: {
-    padding: 16,
+  loadingContent: {
+    flex: 1,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
     alignItems: 'flex-start',
   },
   dotsContainer: {
     flexDirection: 'row',
-    gap: 6,
-    marginBottom: 8,
+    gap: 8,
+    marginBottom: 10,
   },
   dot: {
     width: 10,
@@ -290,7 +270,8 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   loadingText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
+    fontStyle: 'italic',
   },
 });
