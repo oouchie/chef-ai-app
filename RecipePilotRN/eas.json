@@ -1,0 +1,36 @@
+{
+  "cli": {
+    "version": ">= 12.0.0",
+    "appVersionSource": "local"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "simulator": true
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "ios": {
+        "simulator": false
+      }
+    },
+    "production": {
+      "autoIncrement": false
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "oouchie@gmail.com",
+        "ascAppId": "6757722794",
+        "appleTeamId": "BA7AX9ZFTR"
+      },
+      "android": {
+        "track": "production"
+      }
+    }
+  }
+}
