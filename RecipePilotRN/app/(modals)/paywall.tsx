@@ -7,6 +7,8 @@ import {
   useColorScheme,
   TouchableOpacity,
   ActivityIndicator,
+  Platform,
+  Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -70,19 +72,78 @@ export default function PaywallModal() {
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly');
   const [isLoading, setIsLoading] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
+  const [packages, setPackages] = useState<any[]>([]);
+  const [debugInfo, setDebugInfo] = useState<string>('');
+
+  // Load packages on mount
+  useEffect(() => {
+    const loadPackages = async () => {
+      try {
+        // Check module status first
+        const moduleStatus = purchaseService.getModuleStatus();
+        console.log('[Paywall] Module status:', moduleStatus);
+
+        if (!moduleStatus.loaded) {
+          setDebugInfo(`Module not loaded: ${moduleStatus.error || 'Unknown error'}`);
+          return;
+        }
+
+        setDebugInfo('Initializing...');
+
+        // Ensure RevenueCat is initialized
+        if (!moduleStatus.initialized) {
+          await purchaseService.initialize();
+        }
+
+        // Check module status again after init
+        const statusAfterInit = purchaseService.getModuleStatus();
+        if (!statusAfterInit.initialized) {
+          setDebugInfo('Init failed - check API key and bundle ID');
+          return;
+        }
+
+        // Check subscription status
+        const status = await purchaseService.getSubscriptionStatus();
+        const statusStr = status.isPremium ? 'Premium' : 'Free';
+
+        // Get offerings
+        setDebugInfo(`[${statusStr}] Fetching packages...`);
+        const offerings = await purchaseService.getOfferings();
+        setPackages(offerings);
+
+        const ids = offerings.map((p: any) => p.identifier).join(', ');
+        setDebugInfo(
+          offerings.length > 0
+            ? `[${statusStr}] Packages: ${ids}`
+            : `[${statusStr}] 0 packages. Module: ${moduleStatus.loaded ? 'OK' : 'FAIL'}, Init: ${statusAfterInit.initialized ? 'OK' : 'FAIL'}`
+        );
+      } catch (error: any) {
+        console.error('[Paywall] Load error:', error);
+        setDebugInfo(`Error: ${error?.message || error}`);
+      }
+    };
+    loadPackages();
+  }, []);
 
   const handlePurchase = useCallback(async () => {
     setIsLoading(true);
     try {
       const offerings = await purchaseService.getOfferings();
-      const selectedPackage = offerings.find((p) =>
-        selectedPlan === 'yearly'
-          ? p.identifier.includes('yearly') || p.identifier.includes('annual')
-          : p.identifier.includes('monthly')
-      );
+
+      // Match RevenueCat standard identifiers: $rc_monthly, $rc_annual
+      // Also match custom identifiers containing monthly/yearly/annual
+      const selectedPackage = offerings.find((p: any) => {
+        const id = p.identifier?.toLowerCase() || '';
+        if (selectedPlan === 'yearly') {
+          return id === '$rc_annual' || id.includes('yearly') || id.includes('annual');
+        } else {
+          return id === '$rc_monthly' || id.includes('monthly');
+        }
+      });
 
       if (!selectedPackage) {
-        showToast('Package not available', 'error');
+        const availableIds = offerings.map((p: any) => p.identifier).join(', ');
+        showToast(`No ${selectedPlan} package. Available: ${availableIds || 'none'}`, 'error');
         return;
       }
 
@@ -92,10 +153,10 @@ export default function PaywallModal() {
         showToast('Welcome to Premium!', 'success');
         router.back();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Purchase error:', error);
       hapticError();
-      showToast('Purchase failed. Please try again.', 'error');
+      showToast(error?.message || 'Purchase failed. Please try again.', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -268,11 +329,43 @@ export default function PaywallModal() {
           </TouchableOpacity>
         </Animated.View>
 
-        {/* Terms */}
-        <Text style={[styles.termsText, { color: colors.muted }]}>
-          By subscribing, you agree to our Terms of Service and Privacy Policy.
-          Subscriptions automatically renew unless cancelled.
-        </Text>
+        {/* Debug Info - Remove before App Store release */}
+        {debugInfo ? (
+          <Text style={[styles.debugText, { color: colors.muted }]}>
+            {debugInfo}
+          </Text>
+        ) : null}
+
+        {/* Subscription Details */}
+        <View style={styles.subscriptionDetails}>
+          <Text style={[styles.subscriptionDetailText, { color: colors.muted }]}>
+            • {selectedPlan === 'yearly' ? 'Annual' : 'Monthly'} subscription: {selectedPlan === 'yearly' ? '$29.99/year' : '$4.99/month'}
+          </Text>
+          <Text style={[styles.subscriptionDetailText, { color: colors.muted }]}>
+            • Payment charged to iTunes Account at confirmation
+          </Text>
+          <Text style={[styles.subscriptionDetailText, { color: colors.muted }]}>
+            • Subscription automatically renews unless cancelled 24 hours before the end of the current period
+          </Text>
+          <Text style={[styles.subscriptionDetailText, { color: colors.muted }]}>
+            • Manage subscriptions in Account Settings after purchase
+          </Text>
+        </View>
+
+        {/* Terms with Functional Links */}
+        <View style={styles.termsContainer}>
+          <Text style={[styles.termsText, { color: colors.muted }]}>
+            By subscribing, you agree to our{' '}
+          </Text>
+          <TouchableOpacity onPress={() => Linking.openURL('https://1865freemoney.com/terms')}>
+            <Text style={[styles.termsLink, { color: colors.primary }]}>Terms of Use</Text>
+          </TouchableOpacity>
+          <Text style={[styles.termsText, { color: colors.muted }]}> and </Text>
+          <TouchableOpacity onPress={() => Linking.openURL('https://1865freemoney.com/privacy')}>
+            <Text style={[styles.termsLink, { color: colors.primary }]}>Privacy Policy</Text>
+          </TouchableOpacity>
+          <Text style={[styles.termsText, { color: colors.muted }]}>.</Text>
+        </View>
       </ScrollView>
     </View>
   );
@@ -431,11 +524,37 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
   },
+  subscriptionDetails: {
+    marginTop: 24,
+    paddingHorizontal: 16,
+  },
+  subscriptionDetailText: {
+    fontSize: 11,
+    lineHeight: 18,
+    marginBottom: 4,
+  },
+  termsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    marginTop: 16,
+    paddingHorizontal: 20,
+  },
   termsText: {
     fontSize: 11,
-    textAlign: 'center',
-    marginTop: 24,
     lineHeight: 16,
+  },
+  termsLink: {
+    fontSize: 11,
+    lineHeight: 16,
+    textDecorationLine: 'underline',
+    fontWeight: '500',
+  },
+  debugText: {
+    fontSize: 10,
+    textAlign: 'center',
+    marginTop: 16,
     paddingHorizontal: 20,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
 });

@@ -151,13 +151,13 @@ export default function SettingsScreen() {
             <SettingsRow
               icon="book-open"
               title="Privacy Policy"
-              onPress={() => handleOpenLink('https://recipepilot.app/privacy')}
+              onPress={() => handleOpenLink('https://1865freemoney.com/privacy')}
             />
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
             <SettingsRow
               icon="file-text"
               title="Terms of Service"
-              onPress={() => handleOpenLink('https://recipepilot.app/terms')}
+              onPress={() => handleOpenLink('https://1865freemoney.com/terms')}
             />
           </SettingsSection>
         </Animated.View>
@@ -208,8 +208,22 @@ export default function SettingsScreen() {
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text style={[styles.footerText, { color: colors.muted }]}>
-            Made with love by RecipePilot
+          <TouchableOpacity
+            onPress={() => handleOpenLink('https://1865freemoney.com')}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.footerPowered, { color: colors.muted }]}>
+              Powered by{' '}
+              <Text style={[styles.footerBrand, { color: colors.primary }]}>
+                1865 Free Money
+              </Text>
+            </Text>
+          </TouchableOpacity>
+          <Text style={[styles.footerTagline, { color: colors.muted }]}>
+            Digital Excellence. Atlanta, GA
+          </Text>
+          <Text style={[styles.footerCopyright, { color: colors.muted }]}>
+            © {new Date().getFullYear()} RecipePilot. All rights reserved.
           </Text>
         </View>
       </ScrollView>
@@ -294,9 +308,22 @@ const styles = StyleSheet.create({
   },
   footer: {
     alignItems: 'center',
-    paddingTop: 20,
+    paddingTop: 24,
+    paddingBottom: 8,
+    gap: 6,
   },
-  footerText: {
+  footerPowered: {
     fontSize: 13,
+  },
+  footerBrand: {
+    fontWeight: '600',
+  },
+  footerTagline: {
+    fontSize: 11,
+    letterSpacing: 0.3,
+  },
+  footerCopyright: {
+    fontSize: 10,
+    marginTop: 8,
   },
 });
