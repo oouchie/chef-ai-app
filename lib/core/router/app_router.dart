@@ -29,6 +29,31 @@ final _shellNavigatorKey = GlobalKey<NavigatorState>();
 /// Tracks whether the walkthrough has been seen (loaded once at startup).
 bool _walkthroughSeen = false;
 
+/// Flag to coordinate sign-out: allows navigation to /welcome while still
+/// technically logged in, so the profile screen unmounts before the session
+/// is invalidated. Without this, providers crash accessing a null user.
+bool _isSigningOut = false;
+
+/// Call this from the sign-out button. Signs out first, then navigates.
+Future<void> performSignOut() async {
+  debugPrint('[SignOut] Starting sign-out flow');
+  _isSigningOut = true;
+  try {
+    // Step 1: Sign out from Supabase
+    debugPrint('[SignOut] Calling SupabaseService.signOut()');
+    await SupabaseService.signOut();
+    debugPrint('[SignOut] Sign out complete, isLoggedIn=${SupabaseService.isLoggedIn}');
+  } catch (e) {
+    debugPrint('[SignOut] Sign out error: $e');
+  } finally {
+    _isSigningOut = false;
+  }
+  // Step 2: Force navigate to welcome (belt + suspenders with auth listener)
+  debugPrint('[SignOut] Navigating to welcome');
+  appRouter.go(RouteNames.welcome);
+  debugPrint('[SignOut] Done');
+}
+
 /// Call this before runApp to preload the walkthrough flag.
 Future<void> initRouterState() async {
   final prefs = await SharedPreferences.getInstance();
@@ -77,8 +102,8 @@ final appRouter = GoRouter(
 
     debugPrint('[Router] redirect: loc=$loc, loggedIn=$isLoggedIn, walkthroughSeen=$_walkthroughSeen');
 
-    // --- Not logged in ---
-    if (!isLoggedIn) {
+    // --- Not logged in OR signing out ---
+    if (!isLoggedIn || _isSigningOut) {
       // Already on an unauthenticated route → stay
       if (_unauthenticatedRoutes.contains(loc)) return null;
       // Otherwise → go to welcome

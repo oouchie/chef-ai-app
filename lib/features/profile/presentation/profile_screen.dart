@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../domain/profile_provider.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../core/services/purchase_service.dart';
-import '../../../core/services/supabase_service.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/router/route_names.dart';
+import '../../../core/router/app_router.dart';
 import '../../../shared/models/models.dart';
 import '../../../shared/widgets/widgets.dart';
 import '../../../features/recipe_generation/domain/chat_provider.dart';
@@ -83,15 +81,15 @@ class ProfileScreen extends ConsumerWidget {
   Future<void> _signOut(BuildContext context, WidgetRef ref) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Sign Out'),
         content: const Text('Are you sure you want to sign out?'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context, false),
+              onPressed: () => Navigator.pop(dialogContext, false),
               child: const Text('Cancel')),
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.pop(dialogContext, true),
             child: const Text('Sign Out',
                 style: TextStyle(color: AppColors.error)),
           ),
@@ -101,8 +99,9 @@ class ProfileScreen extends ConsumerWidget {
 
     if (confirmed != true) return;
 
-    // Sign out first — the router's auth listener will redirect to /welcome
-    await SupabaseService.signOut();
+    // Coordinated sign-out: navigates to /welcome first (unmounting providers),
+    // then invalidates the Supabase session after the frame settles.
+    await performSignOut();
   }
 }
 
