@@ -1,7 +1,7 @@
 name: recipe_pilot
 description: "AI-powered ingredient-based recipe app by 1865 Free Money LLC"
 publish_to: 'none'
-version: 1.0.2+71
+version: 1.0.2+72
 
 environment:
   sdk: ^3.11.0
@@ -75,6 +75,7 @@ flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/icon/app_icon.png"
+  image_path_ios: "assets/icon/app_icon_ios.png"
   min_sdk_android: 21
   remove_alpha_ios: true
   adaptive_icon_background: "#0a0f1e"

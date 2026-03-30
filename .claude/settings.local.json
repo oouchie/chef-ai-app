@@ -35,7 +35,10 @@
       "Bash(find 'C:/Users/oouch/App Projects/recipe-chatbot' -type f \\\\\\(-name *.ts -o -name *.tsx -o -name *.js -o -name *.jsx \\\\\\) ! -path */node_modules/* ! -path */.next/* ! -path */out/*)",
       "Bash(find 'C:/Users/oouch/App Projects/recipe-chatbot/RecipePilotRN/src' -type f -name *.ts -o -name *.tsx)",
       "Bash(gh repo:*)",
-      "Bash(gh api:*)"
+      "Bash(gh api:*)",
+      "Bash(pip install:*)",
+      "Bash(pip3 install:*)",
+      "Bash(python -c \":*)"
     ]
   }
 }
