@@ -1,7 +1,7 @@
 name: recipe_pilot
 description: "AI-powered ingredient-based recipe app by 1865 Free Money LLC"
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.1+69
 
 environment:
   sdk: ^3.11.0

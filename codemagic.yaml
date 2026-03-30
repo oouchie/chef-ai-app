@@ -12,7 +12,7 @@ workflows:
       groups:
         - recipe_pilot_env
       vars:
-        BUNDLE_ID: "com.freemoney1865.recipe_pilot"
+        BUNDLE_ID: "com.chefai2.app"
     triggering:
       events:
         - push

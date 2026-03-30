@@ -1,4 +1,4 @@
-package com.freemoney1865.recipe_pilot
+package com.chefai2.app
 
 import io.flutter.embedding.android.FlutterActivity
 
