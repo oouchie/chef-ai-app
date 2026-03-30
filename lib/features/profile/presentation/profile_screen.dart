@@ -101,12 +101,7 @@ class ProfileScreen extends ConsumerWidget {
 
     if (confirmed != true) return;
 
-    // Navigate away FIRST to avoid crash from providers accessing null user
-    if (context.mounted) {
-      context.go(RouteNames.welcome);
-    }
-
-    // Then sign out (router's auth listener will keep us on welcome)
+    // Sign out first — the router's auth listener will redirect to /welcome
     await SupabaseService.signOut();
   }
 }
