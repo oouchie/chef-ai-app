@@ -97,14 +97,15 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                   fontSize: 28,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.5,
+                  color: Colors.white,
                 ),
               ),
               const SizedBox(height: 6),
-              const Text(
+              Text(
                 'Unlock the full Recipe Pilot experience',
                 style: TextStyle(
                   fontSize: 15,
-                  color: AppColors.textSecondary,
+                  color: Colors.white.withValues(alpha: 0.7),
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -328,7 +329,7 @@ class _TierColumn extends StatelessWidget {
                 fontWeight: FontWeight.w700,
                 color: isPremium
                     ? Colors.white
-                    : AppColors.textSecondary,
+                    : Colors.white70,
               ),
               textAlign: TextAlign.center,
             ),
@@ -363,7 +364,7 @@ class _TierColumn extends StatelessWidget {
                             fontSize: 12,
                             color: strikethrough
                                 ? AppColors.textSecondary
-                                : null,
+                                : Colors.white,
                             decoration: strikethrough
                                 ? TextDecoration.lineThrough
                                 : null,
