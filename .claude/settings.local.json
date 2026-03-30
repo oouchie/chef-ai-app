@@ -1,0 +1,41 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/c/Users/oouch/Flutter/flutter/bin/flutter analyze:*)",
+      "Bash(/c/Users/oouch/Flutter/flutter/bin/flutter devices:*)",
+      "Bash(/c/Users/oouch/Flutter/flutter/bin/flutter run:*)",
+      "Bash(/c/Users/oouch/Flutter/flutter/bin/flutter clean:*)",
+      "Bash(./gradlew.bat --stop)",
+      "Bash(npm run:*)",
+      "Read(//c/Users/oouch/.claude/projects/C--Users-oouch-App-Projects-recipe-pilot-flutter/fd79fd23-6f37-49c9-a082-50fcedeee184/subagents/**)",
+      "Bash(chcp 65001)",
+      "Bash(python3 -c \":*)",
+      "Bash(python3:*)",
+      "Bash(/c/Users/oouch/Flutter/flutter/bin/flutter pub:*)",
+      "Bash(/c/Users/oouch/Flutter/flutter/bin/dart run:*)",
+      "Bash(/c/Users/oouch/Flutter/flutter/bin/flutter build:*)",
+      "Bash(adb:*)",
+      "Bash(where adb:*)",
+      "Read(//c/Users/oouch/App Projects/recipe-pilot-flutter/$LOCALAPPDATA/Android/Sdk/platform-tools/**)",
+      "Read(//c/Users/oouch/App Projects/recipe-pilot-flutter/$HOME/AppData/Local/Android/Sdk/platform-tools/**)",
+      "Read(//c/Users/oouch/**)",
+      "Bash(\"C:/Users/oouch/AppData/Local/Android/Sdk/platform-tools/adb.exe\" -s RFCY81PNYGH install -r \"C:/Users/oouch/App Projects/recipe-pilot-flutter/build/app/outputs/flutter-apk/app-debug.apk\" 2>&1)",
+      "Bash(ADB=\"C:/Users/oouch/AppData/Local/Android/Sdk/platform-tools/adb.exe\")",
+      "Bash(\"$ADB\" -s RFCY81PNYGH shell pm clear com.freemoney1865.recipe_pilot)",
+      "Bash(\"$ADB\" -s RFCY81PNYGH shell am start -n com.freemoney1865.recipe_pilot/.MainActivity)",
+      "Bash(\"$ADB\" -s RFCY81PNYGH install -r \"C:/Users/oouch/App Projects/recipe-pilot-flutter/build/app/outputs/flutter-apk/app-debug.apk\")",
+      "Bash(\"C:/Users/oouch/AppData/Local/Android/Sdk/platform-tools/adb.exe\" devices:*)",
+      "Bash(\"C:/Users/oouch/AppData/Local/Android/Sdk/platform-tools/adb.exe\" install:*)",
+      "Bash(npx supabase:*)",
+      "Bash(supabase --version)",
+      "Bash(\"C:/Users/oouch/AppData/Local/Android/Sdk/platform-tools/adb.exe\" shell:*)",
+      "Bash(\"C:/Users/oouch/AppData/Local/Android/Sdk/platform-tools/adb.exe\" logcat:*)",
+      "Bash(curl -s -X POST \"https://bwddfoqaqgrbendjgchr.supabase.co/functions/v1/chat\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ3ZGRmb3FhcWdyYmVuZGpnY2hyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzMjY4NzQsImV4cCI6MjA4MzkwMjg3NH0.oQLjkXCHpOIrd4ZKOcOX3MEbWmtWosOOqGRTsNTjHsk\" -d '{\"\"\"\"message\"\"\"\":\"\"\"\"I have chicken and rice\"\"\"\",\"\"\"\"region\"\"\"\":\"\"\"\"all\"\"\"\",\"\"\"\"history\"\"\"\":[]}')",
+      "Bash(find 'C:\\\\Users\\\\oouch\\\\App Projects\\\\recipe-pilot-flutter' -name app_icon.png -o -name LaunchScreen* -o -name *.xcconfig)",
+      "Bash(find 'C:/Users/oouch/App Projects/recipe-chatbot' -type f \\\\\\(-name *.ts -o -name *.tsx -o -name *.js -o -name *.jsx \\\\\\) ! -path */node_modules/* ! -path */.next/* ! -path */out/*)",
+      "Bash(find 'C:/Users/oouch/App Projects/recipe-chatbot/RecipePilotRN/src' -type f -name *.ts -o -name *.tsx)",
+      "Bash(gh repo:*)",
+      "Bash(gh api:*)"
+    ]
+  }
+}

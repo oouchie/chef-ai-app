@@ -1,0 +1,97 @@
+workflows:
+  recipe-pilot-ios:
+    name: Recipe Pilot iOS
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: codemagic
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      groups:
+        - recipe_pilot_env
+      vars:
+        BUNDLE_ID: "com.freemoney1865.recipe_pilot"
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: flutter-migration
+          include: true
+          source: true
+    scripts:
+      - name: Set up code signing
+        script: |
+          keychain initialize
+          openssl genrsa 2048 > /tmp/cert_key.pem
+          export CERTIFICATE_PRIVATE_KEY="$(cat /tmp/cert_key.pem)"
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --platform IOS \
+            --create
+          keychain add-certificates
+          xcode-project use-profiles
+
+      - name: Install dependencies
+        script: |
+          flutter pub get
+
+      - name: Build iOS
+        script: |
+          flutter build ipa \
+            --release \
+            --export-options-plist=/Users/builder/export_options.plist
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - flutter_drive.log
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        beta_groups:
+          - Internal Testers
+
+  recipe-pilot-android:
+    name: Recipe Pilot Android
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      flutter: stable
+      java: 17
+      groups:
+        - recipe_pilot_env
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: flutter-migration
+          include: true
+          source: true
+    scripts:
+      - name: Install dependencies
+        script: |
+          flutter pub get
+
+      - name: Build Android APK
+        script: |
+          flutter build apk --release
+
+      - name: Build Android App Bundle
+        script: |
+          flutter build appbundle --release
+
+    artifacts:
+      - build/app/outputs/flutter-apk/*.apk
+      - build/app/outputs/bundle/release/*.aab
+
+    publishing:
+      email:
+        recipients:
+          - oouchie@1865freemoney.com
+        notify:
+          success: true
+          failure: true
