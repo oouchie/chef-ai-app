@@ -207,6 +207,7 @@ class _SignupScreenState extends State<SignupScreen>
                         AppStrings.signUp,
                         style: theme.textTheme.headlineLarge?.copyWith(
                           fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -214,7 +215,7 @@ class _SignupScreenState extends State<SignupScreen>
                       Text(
                         'Create your Recipe Pilot account',
                         style: theme.textTheme.bodyLarge?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                          color: Colors.white70,
                         ),
                         textAlign: TextAlign.center,
                       ),

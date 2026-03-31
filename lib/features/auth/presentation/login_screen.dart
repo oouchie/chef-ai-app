@@ -176,6 +176,7 @@ class _LoginScreenState extends State<LoginScreen>
                         AppStrings.appName,
                         style: theme.textTheme.headlineLarge?.copyWith(
                           fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -183,7 +184,7 @@ class _LoginScreenState extends State<LoginScreen>
                       Text(
                         AppStrings.appTagline,
                         style: theme.textTheme.bodyLarge?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                          color: Colors.white70,
                         ),
                         textAlign: TextAlign.center,
                       ),

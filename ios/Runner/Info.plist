@@ -12,6 +12,19 @@
 	<string>RecipePilot needs access to your photo library to identify food and ingredients for recipe suggestions.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>io.supabase.recipepilot</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>io.supabase.recipepilot</string>
+			</array>
+		</dict>
+	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>

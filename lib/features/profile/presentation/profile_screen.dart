@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../domain/profile_provider.dart';
-import '../../../core/services/storage_service.dart';
 import '../../../core/services/purchase_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/router/app_router.dart';
@@ -12,11 +11,25 @@ import '../../../shared/widgets/widgets.dart';
 import '../../../features/recipe_generation/domain/chat_provider.dart';
 import '../../../features/subscription/presentation/paywall_screen.dart';
 
-class ProfileScreen extends ConsumerWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Reload profile on every visit to ensure fresh data
+    Future.microtask(() {
+      ref.read(profileProvider.notifier).loadProfile();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final profileState = ref.watch(profileProvider);
     final chatState = ref.watch(chatProvider);
 
@@ -273,18 +286,6 @@ class _SettingsSectionState extends ConsumerState<_SettingsSection> {
       title: 'Settings',
       child: Column(
         children: [
-          // API Key
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.key_outlined, color: AppColors.primary),
-            title: const Text('API Key',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-            subtitle: const Text('Configure your AI API key',
-                style: TextStyle(fontSize: 12)),
-            trailing: const Icon(Icons.chevron_right, size: 18),
-            onTap: () => _showApiKeyDialog(context),
-          ),
-          const Divider(height: 1, thickness: 0.5),
           // Manage subscription
           ListTile(
             contentPadding: EdgeInsets.zero,
@@ -325,46 +326,6 @@ class _SettingsSectionState extends ConsumerState<_SettingsSection> {
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
             trailing: const Icon(Icons.chevron_right, size: 18),
             onTap: () => _restorePurchases(context),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _showApiKeyDialog(BuildContext context) async {
-    final currentKey = await StorageService.getApiKey();
-    final controller = TextEditingController(text: currentKey ?? '');
-
-    if (!context.mounted) return;
-
-    await showDialog<void>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('API Key'),
-        content: TextFormField(
-          controller: controller,
-          obscureText: true,
-          decoration: const InputDecoration(
-            hintText: 'Enter your API key...',
-            labelText: 'API Key',
-          ),
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              if (controller.text.trim().isNotEmpty) {
-                await StorageService.setApiKey(controller.text.trim());
-              } else {
-                await StorageService.removeApiKey();
-              }
-              if (context.mounted) Navigator.pop(context);
-            },
-            child: const Text('Save'),
           ),
         ],
       ),
@@ -502,7 +463,7 @@ class _AboutSection extends StatelessWidget {
           _AboutTile(
             icon: Icons.info_outline,
             label: 'App Version',
-            value: '1.0.0',
+            value: '1.0.2',
           ),
           const Divider(height: 1, thickness: 0.5),
           _AboutTile(

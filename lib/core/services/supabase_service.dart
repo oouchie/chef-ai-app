@@ -1,3 +1,8 @@
+import 'dart:convert';
+import 'dart:math';
+
+import 'package:crypto/crypto.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../shared/models/user_profile.dart';
@@ -49,12 +54,40 @@ class SupabaseService {
     return response;
   }
 
-  static Future<bool> signInWithApple() async {
-    final response = await client.auth.signInWithOAuth(
-      OAuthProvider.apple,
-      redirectTo: 'io.supabase.recipepilot://login-callback/',
+  /// Native Apple Sign-In — uses the Apple credential token directly
+  /// instead of OAuth redirect flow. More reliable on iOS.
+  static Future<AuthResponse> signInWithApple() async {
+    // Generate a cryptographic nonce for security
+    final rawNonce = _generateNonce();
+    final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
+
+    // Trigger native Apple Sign-In dialog
+    final credential = await SignInWithApple.getAppleIDCredential(
+      scopes: [
+        AppleIDAuthorizationScopes.email,
+        AppleIDAuthorizationScopes.fullName,
+      ],
+      nonce: hashedNonce,
     );
-    return response;
+
+    final idToken = credential.identityToken;
+    if (idToken == null) {
+      throw Exception('Apple Sign-In failed — no identity token received.');
+    }
+
+    // Sign in to Supabase using the Apple ID token
+    return await client.auth.signInWithIdToken(
+      provider: OAuthProvider.apple,
+      idToken: idToken,
+      nonce: rawNonce,
+    );
+  }
+
+  /// Generate a random nonce string for Apple Sign-In
+  static String _generateNonce([int length = 32]) {
+    const charset = '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+    final random = Random.secure();
+    return List.generate(length, (_) => charset[random.nextInt(charset.length)]).join();
   }
 
   // Profile
