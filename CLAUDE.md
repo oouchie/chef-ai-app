@@ -13,7 +13,7 @@
 **Contact:** oouchie@1865freemoney.com | 404-490-5856
 **Status:** Flutter migration in progress. RN version live on App Store. Flutter build deploying to TestFlight via Codemagic.
 **GitHub:** `https://github.com/oouchie/chef-ai-app.git` — branch `flutter-migration`
-**Current Version:** 1.0.2+73
+**Current Version:** 1.0.2+75
 
 Recipe Pilot is an **AI-powered ingredient-based recipe app**. Users input ingredients they have on hand and the app generates personalized recipes they can cook right now — reducing food waste and eliminating the "what's for dinner?" problem.
 
@@ -206,7 +206,7 @@ Root (GoRouter)
 
 ## Known Issues / TODO
 
-- [ ] **Apple Sign-In Supabase config** — JWT secret key setup not saving in Supabase dashboard. Native iOS flow may work without it (uses `signInWithIdToken`). Needs testing on device.
+- [ ] **Apple Sign-In** — Supabase provider configured via Management API (Apr 2026). Needs device testing to confirm native flow works end-to-end.
 - [ ] **Google Sign-In** — OAuth provider needs Google Cloud OAuth Client ID configured in Supabase dashboard
 - [ ] **Codemagic signing intermittent** — Sometimes fails with "No valid code signing certificates". Fix: delete stale certs from Apple Developer portal and re-run.
 - [ ] **Android app label** — Shows `recipe_pilot` instead of `Recipe Pilot` in AndroidManifest
