@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/models/models.dart';
 import '../../../core/services/storage_service.dart';
+import '../../../core/services/supabase_service.dart';
 
 // ---------------------------------------------------------------------------
 // State
@@ -82,12 +83,47 @@ class SavedRecipesNotifier extends StateNotifier<SavedRecipesState> {
   }
 
   Future<void> _load() async {
-    final recipes = await StorageService.getSavedRecipes();
-    state = state.copyWith(recipes: recipes);
+    // Load local first (instant, works offline)
+    final localRecipes = await StorageService.getSavedRecipes();
+    state = state.copyWith(recipes: localRecipes);
+
+    // If logged in, fetch cloud and merge
+    if (SupabaseService.isLoggedIn) {
+      try {
+        final cloudRecipes = await SupabaseService.getSavedRecipes();
+
+        final merged = _mergeRecipes(cloudRecipes, localRecipes);
+        state = state.copyWith(recipes: merged);
+        await StorageService.saveSavedRecipes(merged);
+
+        // Upload any local-only recipes to cloud (first-launch migration)
+        final cloudKeys =
+            cloudRecipes.map((r) => '${r.name}||${r.cuisine}').toSet();
+        final localOnly =
+            merged.where((r) => !cloudKeys.contains('${r.name}||${r.cuisine}'));
+        for (final recipe in localOnly) {
+          await SupabaseService.saveRecipe(recipe);
+        }
+      } catch (e) {
+        // Cloud fetch failed — local recipes already loaded
+      }
+    }
   }
 
-  Future<void> _persist() async {
-    await StorageService.saveSavedRecipes(state.recipes);
+  /// Merges two recipe lists, deduplicating by name+cuisine.
+  /// Cloud recipes take precedence.
+  List<Recipe> _mergeRecipes(List<Recipe> cloud, List<Recipe> local) {
+    final seen = <String>{};
+    final merged = <Recipe>[];
+
+    for (final recipe in [...cloud, ...local]) {
+      final key = '${recipe.name}||${recipe.cuisine}';
+      if (seen.add(key)) {
+        merged.add(recipe);
+      }
+    }
+
+    return merged;
   }
 
   // -------------------------------------------------------------------------
@@ -104,11 +140,13 @@ class SavedRecipesNotifier extends StateNotifier<SavedRecipesState> {
                 !(r.name == recipe.name && r.cuisine == recipe.cuisine))
             .toList(),
       );
+      await StorageService.saveSavedRecipes(state.recipes);
+      await SupabaseService.deleteRecipe(recipe);
     } else {
       state = state.copyWith(recipes: [recipe, ...state.recipes]);
+      await StorageService.saveSavedRecipes(state.recipes);
+      await SupabaseService.saveRecipe(recipe);
     }
-
-    await _persist();
   }
 
   void setSearch(String query) {

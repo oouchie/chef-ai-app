@@ -5,6 +5,7 @@ import 'package:crypto/crypto.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../shared/models/recipe.dart';
 import '../../shared/models/user_profile.dart';
 
 class SupabaseService {
@@ -139,6 +140,59 @@ class SupabaseService {
     );
 
     return result as Map<String, dynamic>;
+  }
+
+  // Saved Recipes (cloud sync)
+  static Future<List<Recipe>> getSavedRecipes() async {
+    final user = currentUser;
+    if (user == null) return [];
+
+    try {
+      final data = await client
+          .from('saved_recipes')
+          .select('recipe_data')
+          .eq('user_id', user.id)
+          .order('created_at', ascending: false);
+
+      return (data as List)
+          .map((row) =>
+              Recipe.fromJson(row['recipe_data'] as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  static Future<void> saveRecipe(Recipe recipe) async {
+    final user = currentUser;
+    if (user == null) return;
+
+    try {
+      await client.from('saved_recipes').upsert({
+        'user_id': user.id,
+        'recipe_name': recipe.name,
+        'cuisine': recipe.cuisine,
+        'recipe_data': recipe.toJson(),
+      }, onConflict: 'user_id,recipe_name,cuisine');
+    } catch (e) {
+      // Silently fail — local cache is the fallback
+    }
+  }
+
+  static Future<void> deleteRecipe(Recipe recipe) async {
+    final user = currentUser;
+    if (user == null) return;
+
+    try {
+      await client
+          .from('saved_recipes')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('recipe_name', recipe.name)
+          .eq('cuisine', recipe.cuisine);
+    } catch (e) {
+      // Silently fail — local cache is the fallback
+    }
   }
 
   // Chat via Edge Function

@@ -13,7 +13,7 @@
 **Contact:** oouchie@1865freemoney.com | 404-490-5856
 **Status:** Flutter migration in progress. RN version live on App Store. Flutter build deploying to TestFlight via Codemagic.
 **GitHub:** `https://github.com/oouchie/chef-ai-app.git` — branch `flutter-migration`
-**Current Version:** 1.0.2+75
+**Current Version:** 1.0.2+76
 
 Recipe Pilot is an **AI-powered ingredient-based recipe app**. Users input ingredients they have on hand and the app generates personalized recipes they can cook right now — reducing food waste and eliminating the "what's for dinner?" problem.
 
@@ -206,8 +206,9 @@ Root (GoRouter)
 
 ## Known Issues / TODO
 
-- [ ] **Apple Sign-In** — Supabase provider configured via Management API (Apr 2026). Needs device testing to confirm native flow works end-to-end.
-- [ ] **Google Sign-In** — OAuth provider needs Google Cloud OAuth Client ID configured in Supabase dashboard
+- [ ] **Apple Sign-In** — Supabase provider configured via Management API (Apr 5, 2026). `.p8` key at `C:\Users\oouch\Downloads\AuthKey_SY54CA26JU.p8`. Needs device testing to confirm native flow works end-to-end.
+- [ ] **Apple Sign-In secret expiry** — Client secret JWT expires Oct 2, 2026. Must regenerate before then using the `.p8` key + Team ID `BA7AX9ZFTR` + Key ID `SY54CA26JU`.
+- [ ] **Google Sign-In** — OAuth provider needs Google Cloud OAuth Client ID configured in Supabase dashboard. Note: Google client ID `665822262098-gecvghcsfneej20v5sb67oqr8n5tfst8.apps.googleusercontent.com` is already set in Supabase.
 - [ ] **Codemagic signing intermittent** — Sometimes fails with "No valid code signing certificates". Fix: delete stale certs from Apple Developer portal and re-run.
 - [ ] **Android app label** — Shows `recipe_pilot` instead of `Recipe Pilot` in AndroidManifest
 - [ ] **Profile provider stale data** — Fixed with `loadProfile()` on screen visit, but provider should ideally listen to auth state changes
@@ -227,6 +228,15 @@ Root (GoRouter)
 | `recipepilot_restaurant_trial_used` | One-time trial flag |
 | `recipe_pilot_region` | Selected cuisine region |
 | `walkthrough_seen` | Onboarding completion flag |
+
+---
+
+## Supabase Tables
+
+| Table | Purpose |
+|-------|---------|
+| `profiles` | User profile, premium status, daily usage tracking |
+| `saved_recipes` | Cloud-synced saved recipes (JSONB). Unique on `(user_id, recipe_name, cuisine)` |
 
 ---
 
@@ -264,3 +274,4 @@ git push origin flutter-migration
 6. **Sign-out uses `performSignOut()`** — do NOT call `SupabaseService.signOut()` directly from UI. The coordinated function prevents Navigator lock crash / black screen.
 7. **Dialog context bug** — Always use `builder: (dialogContext) =>` and `Navigator.pop(dialogContext)`, never pop with the parent widget's context.
 8. **iOS icons need `app_icon_ios.png`** — separate file with dark bg filling entire canvas (iOS doesn't support transparency in app icons)
+9. **Supabase Apple provider** — Dashboard won't save Apple config (secret key validation bug). Use Management API `PATCH /v1/projects/{ref}/config/auth` with Bearer token from supabase.com/dashboard/account/tokens. Send `.p8` PEM content as `external_apple_secret`.
