@@ -38,7 +38,10 @@
       "Bash(gh api:*)",
       "Bash(pip install:*)",
       "Bash(pip3 install:*)",
-      "Bash(python -c \":*)"
+      "Bash(python -c \":*)",
+      "Bash(git -C \"C:/Users/oouch/App Projects/recipe-pilot-flutter\" log --oneline -15)",
+      "Bash(node -e ':*)",
+      "Bash(curl:*)"
     ]
   }
 }
