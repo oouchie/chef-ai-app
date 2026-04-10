@@ -10,6 +10,7 @@ import { AppStateProvider } from '@/providers/AppStateProvider';
 import { ThemeProvider } from '@/providers/ThemeProvider';
 import { ToastProvider } from '@/components/Toast';
 import { Colors } from '@/theme';
+import { purchaseService } from '@/lib/purchases';
 
 // Note: global.css import removed - app uses StyleSheet, not NativeWind className
 
@@ -82,9 +83,15 @@ export default function RootLayout() {
   const isDark = colorScheme === 'dark';
   const colors = isDark ? Colors.dark : Colors.light;
 
-  // Hide splash screen on mount
+  // Initialize app on mount
   useEffect(() => {
+    // Hide splash screen
     SplashScreen.hideAsync();
+
+    // Initialize RevenueCat for in-app purchases
+    purchaseService.initialize().catch((err) => {
+      console.warn('Failed to initialize purchases:', err);
+    });
   }, []);
 
   return (

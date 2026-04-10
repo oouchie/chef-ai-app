@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import Animated, {
   FadeIn,
@@ -23,9 +23,11 @@ import Animated, {
 
 import { useAppState } from '@/providers/AppStateProvider';
 import { useToast } from '@/components/Toast';
+import { usePremium } from '@/hooks';
 import { Colors, Shadows } from '@/theme';
 import { sendChatMessage } from '@/lib/chat';
 import { hapticSuccess, hapticLight, hapticSelection } from '@/lib/haptics';
+import { canMakeAIRequest, incrementAIRequests, getRemainingAIRequests, FREE_DAILY_AI_LIMIT } from '@/lib/storage';
 import { WORLD_REGIONS, WorldRegion } from '@/types';
 
 import Header from '@/components/navigation/Header';
@@ -37,6 +39,7 @@ export default function ChatScreen() {
   const isDark = colorScheme === 'dark';
   const colors = isDark ? Colors.dark : Colors.light;
   const insets = useSafeAreaInsets();
+  const { initialMessage } = useLocalSearchParams<{ initialMessage?: string }>();
 
   const {
     state,
@@ -51,10 +54,22 @@ export default function ChatScreen() {
     deleteSession,
   } = useAppState();
   const { showToast } = useToast();
+  const { isPremium, isLoading: isPremiumLoading } = usePremium();
 
   const [isLoading, setIsLoading] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showRegionSheet, setShowRegionSheet] = useState(false);
+  const [remainingRequests, setRemainingRequests] = useState<number | 'unlimited'>('unlimited');
+  const [hasProcessedInitialMessage, setHasProcessedInitialMessage] = useState(false);
+
+  // Load remaining requests on mount and when premium status changes
+  useEffect(() => {
+    const loadRemainingRequests = async () => {
+      const remaining = await getRemainingAIRequests(isPremium);
+      setRemainingRequests(remaining);
+    };
+    loadRemainingRequests();
+  }, [isPremium]);
 
   // Ensure we have a session
   const currentSession = getCurrentSession();
@@ -65,15 +80,30 @@ export default function ChatScreen() {
       ? { name: 'All Cuisines', flag: '🌎', id: 'all' as const }
       : WORLD_REGIONS.find((r) => r.id === state.selectedRegion);
 
-  const handleSendMessage = useCallback(async (message: string) => {
+  const handleSendMessage = useCallback(async (
+    message: string,
+    imageData?: { base64: string; mimeType: string; uri: string }
+  ) => {
+    // Check AI request limits for free users
+    const canRequest = await canMakeAIRequest(isPremium);
+    if (!canRequest) {
+      showToast(`Daily limit reached (${FREE_DAILY_AI_LIMIT} requests). Upgrade for unlimited!`, 'info');
+      router.push('/(modals)/paywall');
+      return;
+    }
+
     // Create session if none exists
     let sessionId = state.currentSessionId;
     if (!sessionId) {
       sessionId = createNewSession();
     }
 
-    // Add user message
-    addMessage(sessionId, { role: 'user', content: message });
+    // Add user message (with image URI for display)
+    addMessage(sessionId, {
+      role: 'user',
+      content: message,
+      ...(imageData?.uri && { imageUri: imageData.uri }),
+    });
 
     setIsLoading(true);
     try {
@@ -85,7 +115,8 @@ export default function ChatScreen() {
       const response = await sendChatMessage(
         message,
         state.selectedRegion,
-        conversationHistory
+        conversationHistory,
+        imageData ? { base64: imageData.base64, mimeType: imageData.mimeType } : undefined
       );
 
       // Add assistant message
@@ -94,6 +125,13 @@ export default function ChatScreen() {
         content: response.response,
         recipe: response.recipe || undefined,
       });
+
+      // Increment request count for free users
+      if (!isPremium) {
+        await incrementAIRequests();
+        const remaining = await getRemainingAIRequests(false);
+        setRemainingRequests(remaining);
+      }
     } catch (error) {
       console.error('Error sending message:', error);
       showToast('Failed to get response. Please try again.', 'error');
@@ -104,7 +142,27 @@ export default function ChatScreen() {
     } finally {
       setIsLoading(false);
     }
-  }, [state.currentSessionId, state.selectedRegion, messages, createNewSession, addMessage, showToast]);
+  }, [state.currentSessionId, state.selectedRegion, messages, createNewSession, addMessage, showToast, isPremium]);
+
+  // Handle initial message from restaurant recipes
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    if (initialMessage && !hasProcessedInitialMessage && !isLoading) {
+      setHasProcessedInitialMessage(true);
+      // Small delay to ensure UI is ready
+      timeoutId = setTimeout(() => {
+        handleSendMessage(initialMessage);
+      }, 300);
+    }
+
+    // Cleanup timeout on unmount to prevent memory leak
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [initialMessage, hasProcessedInitialMessage, isLoading, handleSendMessage]);
 
   const handleSaveRecipe = useCallback((recipe: any) => {
     saveRecipe(recipe);
@@ -213,8 +271,11 @@ export default function ChatScreen() {
           onSaveRecipe={handleSaveRecipe}
           onAddToShoppingList={handleAddToShoppingList}
           savedRecipeIds={savedRecipeIds}
-          isPremium={false}
+          isPremium={isPremium}
           onShowPaywall={handleShowPaywall}
+          onMealPlannerPress={() => router.push('/(modals)/meal-planner')}
+          onRestaurantPress={() => router.push('/(modals)/restaurant')}
+          remainingRequests={remainingRequests}
         />
       </KeyboardAvoidingView>
 

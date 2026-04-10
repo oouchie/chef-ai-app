@@ -4,6 +4,11 @@ import { AppState, ChatSession, TodoItem, Recipe, Message, WorldRegion } from '@
 const STORAGE_KEY = 'recipe-chatbot-data';
 const API_KEY_STORAGE = 'chef-ai-api-key';
 const RESTAURANT_TRIAL_KEY = 'recipepilot_restaurant_trial_used';
+const AI_REQUESTS_KEY = 'recipepilot_ai_requests';
+const AI_REQUESTS_DATE_KEY = 'recipepilot_ai_requests_date';
+
+// Free tier limits
+const FREE_DAILY_AI_LIMIT = 10;
 
 export const defaultState: AppState = {
   sessions: [],
@@ -191,3 +196,50 @@ export async function removeStoredApiKey(): Promise<void> {
     console.error('Failed to remove API key:', error);
   }
 }
+
+// AI Request limit tracking
+export async function getAIRequestsToday(): Promise<number> {
+  try {
+    const today = new Date().toDateString();
+    const storedDate = await AsyncStorage.getItem(AI_REQUESTS_DATE_KEY);
+
+    // Reset counter if it's a new day
+    if (storedDate !== today) {
+      await AsyncStorage.setItem(AI_REQUESTS_DATE_KEY, today);
+      await AsyncStorage.setItem(AI_REQUESTS_KEY, '0');
+      return 0;
+    }
+
+    const count = await AsyncStorage.getItem(AI_REQUESTS_KEY);
+    return parseInt(count || '0', 10);
+  } catch (error) {
+    console.error('Failed to get AI request count:', error);
+    return 0;
+  }
+}
+
+export async function incrementAIRequests(): Promise<number> {
+  try {
+    const current = await getAIRequestsToday();
+    const newCount = current + 1;
+    await AsyncStorage.setItem(AI_REQUESTS_KEY, String(newCount));
+    return newCount;
+  } catch (error) {
+    console.error('Failed to increment AI requests:', error);
+    return 0;
+  }
+}
+
+export async function canMakeAIRequest(isPremium: boolean): Promise<boolean> {
+  if (isPremium) return true;
+  const count = await getAIRequestsToday();
+  return count < FREE_DAILY_AI_LIMIT;
+}
+
+export async function getRemainingAIRequests(isPremium: boolean): Promise<number | 'unlimited'> {
+  if (isPremium) return 'unlimited';
+  const count = await getAIRequestsToday();
+  return Math.max(0, FREE_DAILY_AI_LIMIT - count);
+}
+
+export { FREE_DAILY_AI_LIMIT };

@@ -2,12 +2,12 @@
   "expo": {
     "name": "RecipePilot",
     "slug": "recipepilot",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "recipepilot",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
@@ -16,12 +16,12 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.chefai2.app",
-      "buildNumber": "59",
+      "buildNumber": "68",
       "infoPlist": {
         "NSMicrophoneUsageDescription": "RecipePilot needs access to your microphone for voice input when searching for recipes.",
-        "UIBackgroundModes": [
-          "audio"
-        ],
+        "NSSpeechRecognitionUsageDescription": "RecipePilot needs speech recognition to convert your voice to text when searching for recipes.",
+        "NSCameraUsageDescription": "RecipePilot needs camera access to photograph food and ingredients for recipe suggestions.",
+        "NSPhotoLibraryUsageDescription": "RecipePilot needs access to your photo library to identify food and ingredients for recipe suggestions.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
@@ -31,10 +31,11 @@
         "backgroundColor": "#c45d3a"
       },
       "package": "com.chefai2.app",
-      "versionCode": 59,
+      "versionCode": 68,
       "permissions": [
         "android.permission.RECORD_AUDIO",
-        "android.permission.VIBRATE"
+        "android.permission.VIBRATE",
+        "android.permission.CAMERA"
       ]
     },
     "web": {
@@ -48,6 +49,21 @@
         "expo-notifications",
         {
           "sounds": []
+        }
+      ],
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "RecipePilot needs access to your microphone for voice input when searching for recipes.",
+          "speechRecognitionPermission": "RecipePilot needs speech recognition to convert your voice to text."
+        }
+      ],
+      "expo-audio",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "RecipePilot needs camera access to photograph food and ingredients for recipe suggestions.",
+          "photosPermission": "RecipePilot needs access to your photos to identify food and ingredients for recipe suggestions."
         }
       ]
     ],

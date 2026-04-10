@@ -4,6 +4,7 @@ export interface Message {
   content: string;
   timestamp: number;
   recipe?: Recipe;
+  imageUri?: string;
 }
 
 export interface Recipe {

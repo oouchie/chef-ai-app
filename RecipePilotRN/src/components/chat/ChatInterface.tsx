@@ -6,6 +6,7 @@ import {
   Platform,
   TextInput,
   Text,
+  Image,
   useColorScheme,
   Keyboard,
   Pressable,
@@ -17,6 +18,9 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
+  withRepeat,
+  withSequence,
+  withTiming,
   FadeIn,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -24,6 +28,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Gradients, Shadows, EditorialColors } from '@/theme';
 import { Message, Recipe, WorldRegion, WORLD_REGIONS } from '@/types';
 import { hapticLight } from '@/lib/haptics';
+import { useVoiceInput, useImagePicker } from '@/hooks';
+import type { ImageData } from '@/hooks';
 
 import MessageBubble, { LoadingBubble } from './MessageBubble';
 import QuickPrompts from './QuickPrompts';
@@ -31,7 +37,7 @@ import RecipeCard from '@/components/recipe/RecipeCard';
 
 interface ChatInterfaceProps {
   messages: Message[];
-  onSendMessage: (message: string) => Promise<void>;
+  onSendMessage: (message: string, imageData?: { base64: string; mimeType: string; uri: string }) => Promise<void>;
   isLoading: boolean;
   selectedRegion: WorldRegion | 'all';
   onSaveRecipe: (recipe: Recipe) => void;
@@ -39,6 +45,9 @@ interface ChatInterfaceProps {
   savedRecipeIds: string[];
   isPremium?: boolean;
   onShowPaywall?: () => void;
+  onMealPlannerPress?: () => void;
+  onRestaurantPress?: () => void;
+  remainingRequests?: number | 'unlimited';
 }
 
 export default function ChatInterface({
@@ -51,6 +60,9 @@ export default function ChatInterface({
   savedRecipeIds,
   isPremium = false,
   onShowPaywall,
+  onMealPlannerPress,
+  onRestaurantPress,
+  remainingRequests = 'unlimited',
 }: ChatInterfaceProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -64,6 +76,66 @@ export default function ChatInterface({
   const flatListRef = useRef<FlatList>(null);
   const inputRef = useRef<TextInput>(null);
 
+  // Voice input setup
+  const {
+    isListening,
+    transcript,
+    startListening,
+    stopListening,
+  } = useVoiceInput({
+    onTranscript: (text) => {
+      // When final transcript is received, set it in the input
+      setInput(text);
+      inputRef.current?.focus();
+    },
+    onError: (error) => {
+      console.warn('Voice input error:', error);
+    },
+  });
+
+  // Image picker setup
+  const [pendingImage, setPendingImage] = useState<ImageData | null>(null);
+
+  const { isAvailable: isImagePickerAvailable, isProcessing: isImageProcessing, pickImage } = useImagePicker({
+    onImagePicked: (image) => {
+      setPendingImage(image);
+      hapticLight();
+    },
+    onError: (error) => {
+      console.warn('Image picker error:', error);
+    },
+  });
+
+  // Animated scale for voice button pulsing
+  const voicePulse = useSharedValue(1);
+
+  // Start pulsing animation when listening
+  useEffect(() => {
+    if (isListening) {
+      voicePulse.value = withRepeat(
+        withSequence(
+          withTiming(1.15, { duration: 500 }),
+          withTiming(1, { duration: 500 })
+        ),
+        -1,
+        true
+      );
+    } else {
+      voicePulse.value = withSpring(1);
+    }
+  }, [isListening, voicePulse]);
+
+  // Update input with interim transcript while listening
+  useEffect(() => {
+    if (isListening && transcript) {
+      setInput(transcript);
+    }
+  }, [isListening, transcript]);
+
+  const voiceButtonAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: voicePulse.value }],
+  }));
+
   // Scroll to bottom when messages change
   useEffect(() => {
     if (messages.length > 0) {
@@ -75,27 +147,52 @@ export default function ChatInterface({
 
   const handleSend = useCallback(async () => {
     const trimmedInput = input.trim();
-    if (!trimmedInput || isLoading) return;
+    const hasImage = !!pendingImage;
+    if ((!trimmedInput && !hasImage) || isLoading) return;
 
     hapticLight();
+
+    const imageData = pendingImage ? {
+      base64: pendingImage.base64,
+      mimeType: pendingImage.mimeType,
+      uri: pendingImage.uri,
+    } : undefined;
+
+    const messageText = trimmedInput || 'What can I make with this?';
+
     setInput('');
+    setPendingImage(null);
     Keyboard.dismiss();
-    await onSendMessage(trimmedInput);
-  }, [input, isLoading, onSendMessage]);
+    await onSendMessage(messageText, imageData);
+  }, [input, isLoading, onSendMessage, pendingImage]);
+
+  const handleCameraPress = useCallback(() => {
+    if (pendingImage) {
+      setPendingImage(null);
+      hapticLight();
+      return;
+    }
+    pickImage();
+  }, [pendingImage, pickImage]);
 
   const handleQuickPrompt = useCallback((prompt: string) => {
     setInput(prompt);
     inputRef.current?.focus();
   }, []);
 
-  const handleVoiceInput = useCallback(() => {
+  const handleVoiceInput = useCallback(async () => {
     if (!isPremium) {
       onShowPaywall?.();
       return;
     }
-    // Voice input - requires native implementation
-    hapticLight();
-  }, [isPremium, onShowPaywall]);
+
+    // Toggle listening state
+    if (isListening) {
+      stopListening();
+    } else {
+      await startListening();
+    }
+  }, [isPremium, onShowPaywall, isListening, startListening, stopListening]);
 
   const renderRecipeCard = useCallback(
     (recipe: Recipe) => (
@@ -132,6 +229,8 @@ export default function ChatInterface({
         <QuickPrompts
           onSelectPrompt={handleQuickPrompt}
           isPremium={isPremium}
+          onMealPlannerPress={onMealPlannerPress}
+          onRestaurantPress={onRestaurantPress}
         />
       ) : (
         <FlatList
@@ -190,24 +289,81 @@ export default function ChatInterface({
             },
           ]}
         >
-          {/* Region Indicator - Elegant badge style */}
-          {regionInfo && (
+          {/* Region & Requests Row */}
+          <View style={styles.indicatorRow}>
+            {/* Region Indicator - Elegant badge style */}
+            {regionInfo && (
+              <Animated.View
+                entering={FadeIn.duration(200)}
+                style={[
+                  styles.regionIndicator,
+                  {
+                    backgroundColor: isDark
+                      ? colors.accent + '15'
+                      : colors.accent + '12',
+                    borderColor: colors.accent + '30',
+                  }
+                ]}
+              >
+                <Text style={styles.regionFlag}>{regionInfo.flag}</Text>
+                <Text style={[styles.regionText, { color: colors.accent }]}>
+                  {regionInfo.name} Cuisine
+                </Text>
+              </Animated.View>
+            )}
+
+            {/* Remaining Requests for Free Users */}
+            {!isPremium && remainingRequests !== 'unlimited' && (
+              <Animated.View
+                entering={FadeIn.duration(200)}
+                style={[
+                  styles.requestsIndicator,
+                  {
+                    backgroundColor: remainingRequests <= 3
+                      ? colors.warning + '15'
+                      : colors.muted + '15',
+                    borderColor: remainingRequests <= 3
+                      ? colors.warning + '40'
+                      : colors.muted + '30',
+                  }
+                ]}
+              >
+                <Feather
+                  name="message-circle"
+                  size={12}
+                  color={remainingRequests <= 3 ? colors.warning : colors.muted}
+                />
+                <Text
+                  style={[
+                    styles.requestsText,
+                    { color: remainingRequests <= 3 ? colors.warning : colors.muted }
+                  ]}
+                >
+                  {remainingRequests}/10 free
+                </Text>
+              </Animated.View>
+            )}
+          </View>
+
+          {/* Pending Image Preview */}
+          {pendingImage && (
             <Animated.View
               entering={FadeIn.duration(200)}
-              style={[
-                styles.regionIndicator,
-                {
-                  backgroundColor: isDark
-                    ? colors.accent + '15'
-                    : colors.accent + '12',
-                  borderColor: colors.accent + '30',
-                }
-              ]}
+              style={styles.imagePreviewRow}
             >
-              <Text style={styles.regionFlag}>{regionInfo.flag}</Text>
-              <Text style={[styles.regionText, { color: colors.accent }]}>
-                {regionInfo.name} Cuisine
+              <Image
+                source={{ uri: pendingImage.uri }}
+                style={styles.imagePreviewThumb}
+              />
+              <Text style={[styles.imagePreviewText, { color: colors.muted }]}>
+                Photo attached
               </Text>
+              <Pressable
+                onPress={() => { setPendingImage(null); hapticLight(); }}
+                style={styles.imagePreviewRemove}
+              >
+                <Feather name="x-circle" size={18} color={colors.error} />
+              </Pressable>
             </Animated.View>
           )}
 
@@ -243,45 +399,80 @@ export default function ChatInterface({
               />
             </View>
 
-            {/* Voice Button - Subtle styling */}
+            {/* Camera Button */}
             <Pressable
               style={({ pressed }) => [
-                styles.voiceButton,
+                styles.cameraButton,
                 {
-                  backgroundColor: isPremium
-                    ? colors.secondary + '20'
+                  backgroundColor: pendingImage
+                    ? colors.success + '20'
                     : (isDark ? colors.card : colors.cardElevated),
-                  borderColor: isPremium
-                    ? colors.secondary + '40'
+                  borderColor: pendingImage
+                    ? colors.success + '40'
                     : colors.borderLight,
                   transform: [{ scale: pressed ? 0.94 : 1 }],
                 },
                 Shadows.sm,
               ]}
-              onPress={handleVoiceInput}
-              disabled={isLoading}
+              onPress={handleCameraPress}
+              disabled={isLoading || isImageProcessing}
             >
               <Feather
-                name="mic"
+                name={pendingImage ? 'check-circle' : 'camera'}
                 size={20}
-                color={isPremium ? colors.secondary : colors.muted}
+                color={pendingImage ? colors.success : colors.muted}
               />
-              {!isPremium && (
-                <View style={[styles.premiumBadge, { backgroundColor: colors.accent }]}>
-                  <Feather name="star" size={8} color="white" />
-                </View>
-              )}
             </Pressable>
+
+            {/* Voice Button - Animated when listening */}
+            <Animated.View style={voiceButtonAnimatedStyle}>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.voiceButton,
+                  {
+                    backgroundColor: isListening
+                      ? colors.error + '30'
+                      : isPremium
+                        ? colors.secondary + '20'
+                        : (isDark ? colors.card : colors.cardElevated),
+                    borderColor: isListening
+                      ? colors.error
+                      : isPremium
+                        ? colors.secondary + '40'
+                        : colors.borderLight,
+                    transform: [{ scale: pressed && !isListening ? 0.94 : 1 }],
+                  },
+                  isListening && styles.voiceButtonListening,
+                  Shadows.sm,
+                ]}
+                onPress={handleVoiceInput}
+                disabled={isLoading}
+              >
+                <Feather
+                  name={isListening ? 'mic-off' : 'mic'}
+                  size={20}
+                  color={isListening ? colors.error : isPremium ? colors.secondary : colors.muted}
+                />
+                {!isPremium && !isListening && (
+                  <View style={[styles.premiumBadge, { backgroundColor: colors.accent }]}>
+                    <Feather name="star" size={8} color="white" />
+                  </View>
+                )}
+                {isListening && (
+                  <View style={[styles.listeningDot, { backgroundColor: colors.error }]} />
+                )}
+              </Pressable>
+            </Animated.View>
 
             {/* Send Button - Terracotta gradient */}
             <Pressable
               onPress={handleSend}
-              disabled={!input.trim() || isLoading}
+              disabled={(!input.trim() && !pendingImage) || isLoading}
               style={({ pressed }) => [
                 styles.sendButton,
-                (!input.trim() || isLoading) && styles.sendButtonDisabled,
-                input.trim() && !isLoading && Shadows.glowPrimary,
-                { transform: [{ scale: pressed && input.trim() ? 0.94 : 1 }] },
+                ((!input.trim() && !pendingImage) || isLoading) && styles.sendButtonDisabled,
+                (input.trim() || pendingImage) && !isLoading && Shadows.glowPrimary,
+                { transform: [{ scale: pressed && (input.trim() || pendingImage) ? 0.94 : 1 }] },
               ]}
             >
               <LinearGradient
@@ -319,16 +510,33 @@ const styles = StyleSheet.create({
     padding: 14,
     paddingTop: 10,
   },
+  indicatorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
   regionIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 16,
-    marginBottom: 10,
-    alignSelf: 'flex-start',
     gap: 6,
     borderWidth: 1,
+  },
+  requestsIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    gap: 5,
+    borderWidth: 1,
+  },
+  requestsText: {
+    fontSize: 11,
+    fontWeight: '600',
   },
   regionFlag: {
     fontSize: 14,
@@ -359,6 +567,35 @@ const styles = StyleSheet.create({
     maxHeight: 100,
     fontWeight: '400',
   },
+  cameraButton: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  imagePreviewRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+    gap: 10,
+  },
+  imagePreviewThumb: {
+    width: 48,
+    height: 48,
+    borderRadius: 10,
+  },
+  imagePreviewText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  imagePreviewRemove: {
+    padding: 4,
+  },
   voiceButton: {
     width: 46,
     height: 46,
@@ -366,6 +603,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
+  },
+  voiceButtonListening: {
+    borderWidth: 2,
   },
   premiumBadge: {
     position: 'absolute',
@@ -376,6 +616,14 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  listeningDot: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   sendButton: {
     borderRadius: 23,

@@ -7,7 +7,206 @@
 **Description:** AI-powered recipe discovery, meal planning, and step-by-step cooking assistant
 **Target Platform:** iOS 15.0+ (iPhone and iPad), Android
 **Distribution:** Apple App Store, Google Play Store
-**Current Build:** 48
+**Current Build:** 68
+
+---
+
+## Mission Complete: App Store Submission Ready
+
+**Previous Issues (All Resolved):**
+1. **AI not working on TestFlight** - Supabase anon key was stale/outdated - Updated to new key
+2. **RevenueCat "no packages"** - Multiple causes identified and fixed:
+   - `purchaseService.initialize()` was never called at app startup - Added to `_layout.tsx`
+   - Added promise-based initialization tracking to prevent race conditions
+   - Added retry logic for getOfferings()
+   - **Root cause: Paid Apps Agreement not set up in App Store Connect** (banking/tax info required)
+
+**Status:** v1.0.1 (Build 68) SUBMITTED to App Store Connect - February 23, 2026
+
+### Build History & Apple Review Journey
+
+The app went through **4 review rejections** before all issues were resolved. See `agents/App-Store-Approval.md` for a comprehensive guide based on these lessons learned.
+
+**Review 1 (Jan 30):** Guideline 3.1.2 (Terms of Use), 2.1 (IAP Error), 2.5.4 (Audio Background Mode), 2.3.3 (iPad Screenshots)
+**Review 2 (Feb 3):** Guideline 2.3.3 (iPad Screenshots still wrong), 2.1 (IAP Error on iPad)
+**Review 3 (Feb 5):** Guideline 2.1 (Subscription re-prompt bug)
+**Review 4 (Feb 23):** v1.0.1 Build 68 submitted with all fixes + new features
+
+### What's in v1.0.1 (Build 68)
+1. **Photo-to-Recipe** - Snap a photo of food or ingredients, AI identifies and suggests recipes (Claude Vision)
+2. **Voice Input (Premium)** - Hands-free recipe search via speech-to-text
+3. **Smarter AI Prompts** - Better recipe responses with more detail
+4. **Daily Free Requests** - 10/day counter for free users
+5. **New Architecture Enabled** - Required by Reanimated 4.x
+6. **All Apple review issues resolved** - IAP, Terms, Screenshots, Background Modes
+
+---
+
+## Volume 2 - Future Enhancements
+
+Ideas for future updates once revenue is generated:
+
+### AI & Chat Enhancements
+- [ ] Recipe image generation (AI-generated food photos)
+- [ ] Voice-guided cooking mode (step-by-step audio instructions)
+- [ ] Multi-language support
+- [ ] Dietary restriction profiles (vegan, gluten-free, keto, etc.)
+- [ ] Allergy warnings and substitution suggestions
+
+### Social Features
+- [ ] Share recipes with friends
+- [ ] Community recipe submissions
+- [ ] Recipe ratings and reviews
+- [ ] Follow favorite chefs/creators
+
+### Smart Kitchen Integration
+- [ ] Smart appliance integration (Instant Pot, air fryer presets)
+- [ ] Grocery delivery integration (Instacart, Amazon Fresh)
+- [ ] Barcode scanner for pantry management
+- [ ] Expiration date tracking
+
+### Meal Planning Pro
+- [ ] Nutritional goal tracking
+- [ ] Budget-based meal planning
+- [ ] Family meal planning (multiple preferences)
+- [ ] Leftover recipe suggestions
+
+### Gamification
+- [ ] Cooking streaks and achievements
+- [ ] Recipe challenges
+- [ ] Cuisine exploration badges
+- [ ] Weekly cooking goals
+
+---
+
+## Android Launch Checklist
+
+The code is ready for Android - it automatically uses the correct API key per platform. Complete these steps when ready:
+
+### 1. RevenueCat API Key (Code Change Needed)
+Currently a placeholder in `src/lib/purchases.ts`:
+```typescript
+const REVENUECAT_API_KEY_ANDROID = 'goog_xxx'; // TODO: Add Android key
+```
+Replace `goog_xxx` with your actual key from RevenueCat.
+
+### 2. Google Play Console Setup
+- [ ] Create developer account at https://play.google.com/console ($25 one-time fee)
+- [ ] Create app listing for RecipePilot
+- [ ] Set up **Subscriptions** (Monetize → Products → Subscriptions):
+  - `recipepilot_premium_monthly` - $4.99/month
+  - `recipepilot_premium_yearly` - $29.99/year
+- [ ] Complete store listing (description, screenshots, etc.)
+- [ ] Set up **Payments profile** (banking info for payouts)
+- [ ] Create **Service Account** for RevenueCat (see step 3)
+
+### 3. RevenueCat Android Setup
+- [ ] In RevenueCat dashboard → **Apps & providers** → **+ New app**
+- [ ] Select **Google Play Store**
+- [ ] Enter package name: `com.chefai2.app`
+- [ ] Upload **Google Play Service Account JSON** (for server-side validation):
+  - Google Cloud Console → Create Service Account
+  - Grant "Pub/Sub Admin" permission
+  - Download JSON key
+  - Link in Google Play Console → API access
+- [ ] Copy the **Public SDK Key** (starts with `goog_`)
+- [ ] Products will auto-import from Play Console
+- [ ] Add products to existing "default" offering
+
+### 4. Build for Android
+```bash
+cd RecipePilotRN
+eas build --platform android --profile production
+```
+
+### 5. Submit to Play Store
+```bash
+eas submit --platform android
+```
+
+### What's Already Working
+- Same codebase works for both platforms
+- RevenueCat handles both stores seamlessly
+- Same product IDs used on both platforms
+- UI is already cross-platform compatible
+- All features work identically
+
+---
+
+## RevenueCat Debug Runbook
+
+### Pre-Flight Checklist
+- [ ] **NOT using Expo Go** - Must use dev build (`npx expo run:ios`) or EAS build
+- [ ] `Purchases.configure()` called once on app startup
+- [ ] Correct API key for platform (iOS: `appl_...`, Android: `goog_...`)
+- [ ] Bundle ID matches RevenueCat app settings (`com.chefai2.app`)
+
+### Offerings Verification
+1. Call `Purchases.getOfferings()` and confirm:
+   - `offerings.current` exists (not null)
+   - `offerings.current.availablePackages.length > 0`
+2. If packages empty, check RevenueCat Dashboard:
+   - **Offerings** → Verify "Current" offering is set (star icon)
+   - **Packages** → Verify packages attached (`$rc_monthly`, `$rc_annual`)
+   - **Products** → Verify product IDs match App Store Connect exactly (case-sensitive)
+
+### App Store Connect Verification
+- [ ] Subscription group exists ("Premium")
+- [ ] Products created with correct IDs:
+  - `recipepilot_premium_monthly` - $4.99/month
+  - `recipepilot_premium_yearly` - $29.99/year
+- [ ] Products status: "Ready to Submit" or "Approved"
+- [ ] Agreements, Tax, and Banking completed
+- [ ] Sandbox tester account configured
+
+### RevenueCat Dashboard Verification
+- [ ] iOS app configured with Bundle ID: `com.chefai2.app`
+- [ ] App Store Connect API key uploaded (`.p8` file)
+- [ ] Products imported from App Store Connect
+- [ ] Offering created and set as **Current**
+- [ ] Packages added: `$rc_monthly`, `$rc_annual`
+- [ ] Entitlement "premium" linked to products
+
+### Common Issues
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| Empty packages | No current offering | Set offering as Current in RevenueCat |
+| Empty packages | Packages not attached | Add packages to offering |
+| 401 errors | Wrong API key | Verify SDK API key matches dashboard |
+| Purchases fail | Expo Go | Use dev build or EAS build |
+| Products not found | ID mismatch | Check case-sensitive product IDs |
+
+---
+
+## How to Test RevenueCat
+
+### Development Testing
+```bash
+cd RecipePilotRN
+
+# Create development build (required for purchases)
+npx expo run:ios
+
+# Or use EAS development build
+eas build --platform ios --profile development
+```
+
+### Sandbox Testing (TestFlight)
+1. Build and submit to TestFlight:
+   ```bash
+   eas build --platform ios --profile production
+   eas submit --platform ios
+   ```
+2. Install from TestFlight
+3. Use a **Sandbox Apple ID** (create in App Store Connect → Users → Sandbox Testers)
+4. Sign out of regular Apple ID in Settings → App Store
+5. When prompted to purchase, sign in with Sandbox account
+
+### Verifying Purchases Work
+1. Open app → Navigate to Paywall
+2. Debug info should show: `[Free] Packages: $rc_monthly, $rc_annual`
+3. Tap "Start Free Trial" → Sandbox purchase sheet appears
+4. Complete purchase → Should show "Welcome to Premium!"
 
 ---
 
@@ -18,6 +217,7 @@
 | Feature | Description |
 |---------|-------------|
 | **AI Chat** | Natural language recipe search powered by Claude AI |
+| **Photo-to-Recipe** | Take a photo of food or ingredients, AI identifies them and suggests recipes (Claude Vision) |
 | **14 World Cuisines** | African, Asian, European, Latin American, Middle Eastern, Southern, Soul Food, Cajun & Creole, Tex-Mex, BBQ, New England, Midwest, Oceanian, Caribbean |
 | **Recipe Cards** | Tabbed view with ingredients, instructions, and chef tips |
 | **Save Favorites** | Personal recipe collection stored locally |
@@ -48,9 +248,10 @@
 | Feature | Free | Premium |
 |---------|------|---------|
 | AI Requests | 10/day | Unlimited |
+| Photo-to-Recipe | 10/day (shared with AI) | Unlimited |
 | Restaurant Recipes | 1 trial | Unlimited |
 | Voice Input | No | Yes |
-| Ad-free | No | Yes |
+| Early Access | No | Yes |
 
 ### Restaurant-Inspired Recipes (Premium)
 
@@ -67,14 +268,16 @@ Recreate dishes from popular restaurants:
 
 | Layer | Technology |
 |-------|------------|
-| Framework | Expo SDK 52 with expo-router 4.x |
+| Framework | Expo SDK 54 with expo-router 4.x |
 | Language | TypeScript 5.x |
 | Styling | React Native StyleSheet (inline styles) |
-| Animations | react-native-reanimated 3.x |
+| Animations | react-native-reanimated 4.x (requires New Architecture) |
 | Glassmorphism | expo-blur + expo-linear-gradient |
 | Storage | @react-native-async-storage/async-storage |
 | Haptics | expo-haptics |
 | Notifications | expo-notifications |
+| Voice Input | expo-speech-recognition (Premium) |
+| Photo Recognition | expo-image-picker + Claude Vision API |
 | Backend | Supabase (PostgreSQL, Edge Functions, Auth) |
 | AI Integration | Claude API (Anthropic) via Supabase Edge Function |
 | Payments | RevenueCat (react-native-purchases) |
@@ -123,7 +326,7 @@ recipe-chatbot/
 │   │   │   ├── storage.ts    # AsyncStorage helpers
 │   │   │   ├── purchases.ts  # RevenueCat
 │   │   │   └── haptics.ts    # expo-haptics
-│   │   ├── hooks/            # useAppState, useTheme
+│   │   ├── hooks/            # useAppState, useTheme, useVoiceInput, useImagePicker
 │   │   ├── theme/            # colors, gradients, shadows, animations
 │   │   ├── types/            # TypeScript definitions
 │   │   └── providers/        # AppStateProvider, ThemeProvider
@@ -284,6 +487,7 @@ interface Message {
   content: string;
   timestamp: number;
   recipe?: Recipe;
+  imageUri?: string;
 }
 
 interface ChatSession {
@@ -435,11 +639,16 @@ Environment variables are configured in `eas.json` for production builds:
 
 ```json
 {
+  "cli": {
+    "version": ">= 12.0.0",
+    "appVersionSource": "local"
+  },
   "build": {
     "production": {
+      "autoIncrement": false,
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://bwddfoqaqgrbendjgchr.supabase.co",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJxxx..."
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
       }
     }
   },
@@ -454,6 +663,8 @@ Environment variables are configured in `eas.json` for production builds:
   }
 }
 ```
+
+**IMPORTANT:** The `env` section in `eas.json` is required for production builds to access Supabase. Without it, the AI chat will not work.
 
 ---
 
@@ -494,7 +705,12 @@ max_tokens: 2048
 Mobile App → Supabase Edge Function → Claude API
                     ↓
             CLAUDE_API_KEY (secret)
+
+Photo-to-Recipe flow:
+expo-image-picker → base64 → Edge Function → Claude Vision API → Recipe JSON
 ```
+
+The Edge Function supports both text-only and image+text requests. When an image is included, it builds a Claude Vision content array with the base64 image and text prompt. Separate optimized system prompts are used for text vs. image requests.
 
 Users don't need API keys. The Settings screen only shows subscription and app info.
 
@@ -509,17 +725,24 @@ Users don't need API keys. The Settings screen only shows subscription and app i
 ### Entitlement ID
 - `premium`
 
-### API Keys (app.json)
-- iOS: `appl_xxx` (replace with actual)
-- Android: `goog_xxx` (replace with actual)
+### API Keys (purchases.ts)
+- iOS: `appl_OQnKoMJWXJCotYpzyhQoBCpVZlU`
+- Android: `goog_xxx` (TODO: Add when ready)
+
+### Offering Setup
+1. Create offering named "default" in RevenueCat
+2. Set as "Current" offering
+3. Add packages:
+   - `$rc_monthly` → attach `recipepilot_premium_monthly`
+   - `$rc_annual` → attach `recipepilot_premium_yearly`
 
 ---
 
 ## Versioning
 
 ### React Native (app.json)
-- Version: 1.0.0
-- Build: 41 (manually increment before each TestFlight submission)
+- Version: 1.0.1
+- Build: 68 (manually increment before each TestFlight submission)
 
 ### Legacy iOS (project.pbxproj)
 - Marketing Version: 1.0
@@ -548,7 +771,7 @@ Users don't need API keys. The Settings screen only shows subscription and app i
 2. **New Architecture (Fabric) Compatibility** - Disable if having issues:
    ```json
    // app.json
-   "newArchEnabled": false
+   "newArchEnabled": true
    ```
 
 3. **Reanimated Entering Animations** - The `entering={FadeInUp...}` animations may not run correctly, leaving components invisible. Replace with static Views for debugging.

@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir \"C:\\\\Users\\\\oouch\\\\App Projects\\\\recipe-chatbot\\\\RecipePilotRN\\\\assets\\\\images\")",
+      "Bash(copy:*)",
+      "Bash(npx supabase status)",
+      "Bash(npx supabase:*)",
+      "Bash(npx eas:*)",
+      "Bash(npx create-next-app:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(git init:*)",
+      "Bash(git remote add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nInitial commit: RJ Consulting Services website\n\n- Next.js 16 + TypeScript + TailwindCSS v4 + Framer Motion\n- 6 pages: Home, Services, How We Work, Results, About, Contact\n- Premium effects: ConnectingDots hero, mouse-follow glow, magnetic buttons\n- Motion primitives: FadeUp, Stagger, SectionReveal\n- Full responsive design with reduced motion support\n- CLAUDE.md documentation\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(npm i:*)",
+      "Bash(cd:*)",
+      "WebSearch",
+      "Bash(npx expo install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(cd C:\\\\Users\\\\oouch\\\\App Projects\\\\recipe-chatbot\\\\RecipePilotRN:*)",
+      "WebFetch(domain:job-logs.eascdn.net)",
+      "Bash(cd C:\\\\Users\\\\oouch\\\\App Projects\\\\recipe-chatbot\\\\RecipePilotR2)"
+    ]
+  }
+}

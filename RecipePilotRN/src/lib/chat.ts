@@ -12,16 +12,18 @@ export async function sendChatMessage(
   message: string,
   region: WorldRegion | 'all',
   conversationHistory: { role: string; content: string }[],
-  _apiKey?: string // Kept for backwards compatibility, no longer used
+  image?: { base64: string; mimeType: string }
 ): Promise<ChatResponse> {
   try {
-    const result = await sendChatMessageViaSupabase(message, region, conversationHistory);
+    console.log('[Chat] Sending message to Supabase...', image ? '(with image)' : '');
+    const result = await sendChatMessageViaSupabase(message, region, conversationHistory, image);
+    console.log('[Chat] Got response, isDemo:', result.isDemo);
     return result;
-  } catch (error) {
-    console.error('Chat error:', error);
-    // Fallback to demo mode on error
+  } catch (error: any) {
+    console.error('[Chat] ERROR:', error?.message || error);
+    // Return error message instead of silent demo fallback
     return {
-      response: generateDemoResponse(message, region),
+      response: `⚠️ AI Error: ${error?.message || 'Could not connect to AI service. Please check your internet connection and try again.'}\n\n---\n\nHere's a demo response while we fix this:\n\n${generateDemoResponse(message, region)}`,
       recipe: generateDemoRecipe(message, region),
       isDemo: true,
     };

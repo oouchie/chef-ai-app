@@ -229,8 +229,9 @@ export default function RecipeCard({
           {/* Tab Content */}
           <ScrollView
             style={styles.tabContent}
+            contentContainerStyle={styles.tabContentContainer}
             nestedScrollEnabled
-            showsVerticalScrollIndicator={false}
+            showsVerticalScrollIndicator={true}
           >
             {/* Ingredients Tab - Clean list with warm bullets */}
             {activeTab === 'ingredients' && (
@@ -477,9 +478,12 @@ const styles = StyleSheet.create({
     borderRadius: 1,
   },
   tabContent: {
-    maxHeight: 320,
+    maxHeight: 400,
+  },
+  tabContentContainer: {
     paddingHorizontal: 18,
-    paddingVertical: 16,
+    paddingTop: 16,
+    paddingBottom: 24,
   },
   ingredientsList: {
     gap: 14,

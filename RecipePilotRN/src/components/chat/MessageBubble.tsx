@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import {
   View,
   Text,
+  Image,
   StyleSheet,
   useColorScheme,
 } from 'react-native';
@@ -52,6 +53,13 @@ export default function MessageBubble({ message, renderRecipeCard, index = 0 }: 
           end={{ x: 1, y: 1 }}
           style={[styles.bubble, styles.userBubble, Shadows.md]}
         >
+          {message.imageUri && (
+            <Image
+              source={{ uri: message.imageUri }}
+              style={styles.userImage}
+              resizeMode="cover"
+            />
+          )}
           <Text style={styles.userText}>{message.content}</Text>
         </LinearGradient>
       </Animated.View>
@@ -238,6 +246,12 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
     paddingLeft: 14,
+  },
+  userImage: {
+    width: '100%',
+    height: 180,
+    borderRadius: 12,
+    marginBottom: 10,
   },
   userText: {
     color: '#faf8f5',

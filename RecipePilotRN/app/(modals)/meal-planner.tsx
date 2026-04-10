@@ -6,11 +6,13 @@ import {
   ScrollView,
   useColorScheme,
   TouchableOpacity,
+  ActivityIndicator,
+  Pressable,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { Colors, Gradients } from '@/theme';
@@ -41,6 +43,8 @@ export default function MealPlannerModal() {
   const [selectedSlot, setSelectedSlot] = useState<MealSlot | null>(null);
   const [isPremium, setIsPremium] = useState(false);
   const [isCheckingPremium, setIsCheckingPremium] = useState(true);
+  const [showHints, setShowHints] = useState(true);
+  const [pressedRecipeId, setPressedRecipeId] = useState<string | null>(null);
 
   // Check premium status on mount
   useEffect(() => {
@@ -86,10 +90,41 @@ export default function MealPlannerModal() {
         [meal]: undefined,
       },
     }));
-  }, []);
+    showToast('Recipe removed', 'info');
+  }, [showToast]);
+
+  // Loading state
+  if (isCheckingPremium) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <GlassView
+          intensity="strong"
+          style={[styles.header, { paddingTop: insets.top + 10 }]}
+          borderRadius={0}
+        >
+          <View style={styles.headerRow}>
+            <Text style={[styles.headerTitle, { color: colors.foreground }]}>
+              Meal Planner
+            </Text>
+            <TouchableOpacity
+              onPress={() => router.back()}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              accessibilityLabel="Close meal planner"
+              accessibilityRole="button"
+            >
+              <Feather name="x" size={24} color={colors.muted} />
+            </TouchableOpacity>
+          </View>
+        </GlassView>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      </View>
+    );
+  }
 
   // Premium gate - show upgrade prompt for non-premium users
-  if (!isCheckingPremium && !isPremium) {
+  if (!isPremium) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         {/* Header */}
@@ -102,7 +137,12 @@ export default function MealPlannerModal() {
             <Text style={[styles.headerTitle, { color: colors.foreground }]}>
               Meal Planner
             </Text>
-            <TouchableOpacity onPress={() => router.back()}>
+            <TouchableOpacity
+              onPress={() => router.back()}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              accessibilityLabel="Close meal planner"
+              accessibilityRole="button"
+            >
               <Feather name="x" size={24} color={colors.muted} />
             </TouchableOpacity>
           </View>
@@ -130,9 +170,9 @@ export default function MealPlannerModal() {
           <View style={styles.premiumFeatures}>
             {[
               'Weekly meal calendar',
-              'Drag & drop scheduling',
+              'Easy recipe scheduling',
               'Auto shopping lists',
-              'Nutritional insights',
+              'Plan ahead for the week',
             ].map((feature, index) => (
               <View key={index} style={styles.premiumFeatureRow}>
                 <Feather name="check-circle" size={18} color={colors.success} />
@@ -154,6 +194,8 @@ export default function MealPlannerModal() {
           <TouchableOpacity
             style={styles.cancelButton}
             onPress={() => router.back()}
+            accessibilityLabel="Go back"
+            accessibilityRole="button"
           >
             <Text style={[styles.cancelText, { color: colors.muted }]}>Maybe Later</Text>
           </TouchableOpacity>
@@ -174,7 +216,12 @@ export default function MealPlannerModal() {
           <Text style={[styles.headerTitle, { color: colors.foreground }]}>
             Meal Planner
           </Text>
-          <TouchableOpacity onPress={() => router.back()}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            accessibilityLabel="Close meal planner"
+            accessibilityRole="button"
+          >
             <Feather name="x" size={24} color={colors.muted} />
           </TouchableOpacity>
         </View>
@@ -188,61 +235,116 @@ export default function MealPlannerModal() {
         contentContainerStyle={[styles.contentContainer, { paddingBottom: insets.bottom + 20 }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Calendar Grid */}
-        <View style={styles.calendarGrid}>
-          {/* Header Row */}
-          <View style={styles.gridRow}>
-            <View style={styles.mealTypeColumn} />
-            {DAYS.map((day) => (
-              <View key={day} style={styles.dayHeader}>
-                <Text style={[styles.dayText, { color: colors.foreground }]}>{day}</Text>
+        {/* Dismissable Hints */}
+        {showHints && (
+          <Animated.View entering={FadeIn.duration(300)}>
+            <GlassView intensity="light" style={styles.hintsCard}>
+              <View style={styles.hintsContent}>
+                <Feather name="info" size={18} color={colors.primary} />
+                <Text style={[styles.hintText, { color: colors.foreground }]}>
+                  Tap a slot to add a recipe. Tap the X to remove.
+                </Text>
               </View>
-            ))}
-          </View>
+              <TouchableOpacity
+                onPress={() => setShowHints(false)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityLabel="Dismiss hint"
+                accessibilityRole="button"
+              >
+                <Text style={[styles.dismissHint, { color: colors.primary }]}>Got it</Text>
+              </TouchableOpacity>
+            </GlassView>
+          </Animated.View>
+        )}
 
-          {/* Meal Rows */}
+        {/* Calendar Grid - Horizontal scrolling per meal type */}
+        <View style={styles.calendarGrid}>
           {MEAL_TYPES.map((meal, mealIndex) => (
             <Animated.View
               key={meal}
               entering={FadeInDown.delay(mealIndex * 100).duration(300)}
-              style={styles.gridRow}
+              style={styles.mealRow}
             >
-              <View style={styles.mealTypeColumn}>
+              <View style={styles.mealTypeHeader}>
+                <View style={[styles.mealTypeIcon, { backgroundColor: colors.primary + '15' }]}>
+                  <Feather
+                    name={meal === 'Breakfast' ? 'sunrise' : meal === 'Lunch' ? 'sun' : 'moon'}
+                    size={16}
+                    color={colors.primary}
+                  />
+                </View>
                 <Text style={[styles.mealTypeText, { color: colors.foreground }]}>{meal}</Text>
               </View>
-              {DAYS.map((day) => {
-                const recipeName = mealPlan[day]?.[meal];
-                const isSelected = selectedSlot?.day === day && selectedSlot?.meal === meal;
 
-                return (
-                  <TouchableOpacity
-                    key={`${day}-${meal}`}
-                    style={[
-                      styles.mealSlot,
-                      {
-                        backgroundColor: recipeName
-                          ? colors.primary + '15'
-                          : colors.glassBackgroundStrong,
-                        borderColor: isSelected ? colors.primary : colors.glassBorder,
-                        borderWidth: isSelected ? 2 : 1,
-                      },
-                    ]}
-                    onPress={() => handleSlotPress(day, meal)}
-                    onLongPress={() => recipeName && handleClearSlot(day, meal)}
-                  >
-                    {recipeName ? (
-                      <Text
-                        style={[styles.slotRecipe, { color: colors.primary }]}
-                        numberOfLines={2}
-                      >
-                        {recipeName}
-                      </Text>
-                    ) : (
-                      <Feather name="plus" size={16} color={colors.muted} />
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.daysScrollContent}
+              >
+                {DAYS.map((day) => {
+                  const recipeName = mealPlan[day]?.[meal];
+                  const isSelected = selectedSlot?.day === day && selectedSlot?.meal === meal;
+
+                  return (
+                    <Pressable
+                      key={`${day}-${meal}`}
+                      style={[
+                        styles.mealSlot,
+                        {
+                          backgroundColor: recipeName
+                            ? colors.primary + '15'
+                            : colors.glassBackgroundStrong,
+                          borderColor: isSelected ? colors.primary : colors.glassBorder,
+                          borderWidth: isSelected ? 2 : 1,
+                        },
+                      ]}
+                      onPress={() => handleSlotPress(day, meal)}
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        recipeName
+                          ? `${day} ${meal}: ${recipeName}. Tap to change.`
+                          : `Add recipe for ${day} ${meal}`
+                      }
+                      accessibilityState={{ selected: isSelected }}
+                    >
+                      <Text style={[styles.dayLabel, { color: colors.muted }]}>{day}</Text>
+
+                      {recipeName ? (
+                        <View style={styles.slotContent}>
+                          <View style={[styles.recipeIndicator, { backgroundColor: colors.primary }]}>
+                            <Feather name="check" size={12} color="white" />
+                          </View>
+                          <Text
+                            style={[styles.slotRecipe, { color: colors.primary }]}
+                            numberOfLines={2}
+                          >
+                            {recipeName}
+                          </Text>
+                          {/* Visible delete button - uses Pressable to prevent parent trigger */}
+                          <Pressable
+                            onPress={() => handleClearSlot(day, meal)}
+                            style={({ pressed }) => [
+                              styles.deleteButton,
+                              pressed && { opacity: 0.7 }
+                            ]}
+                            hitSlop={{ top: 13, bottom: 13, left: 13, right: 13 }}
+                            accessibilityLabel={`Remove ${recipeName} from ${day} ${meal}`}
+                            accessibilityRole="button"
+                          >
+                            <View style={[styles.deleteIcon, { backgroundColor: colors.error }]}>
+                              <Feather name="x" size={10} color="white" />
+                            </View>
+                          </Pressable>
+                        </View>
+                      ) : (
+                        <View style={styles.emptySlot}>
+                          <Feather name="plus" size={18} color={colors.muted} />
+                        </View>
+                      )}
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
             </Animated.View>
           ))}
         </View>
@@ -258,13 +360,22 @@ export default function MealPlannerModal() {
               {state.savedRecipes.length > 0 ? (
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                   {state.savedRecipes.map((recipe) => (
-                    <TouchableOpacity
+                    <Pressable
                       key={recipe.id}
                       style={[
                         styles.recipeCard,
-                        { backgroundColor: colors.glassBackgroundStrong },
+                        {
+                          backgroundColor: colors.glassBackgroundStrong,
+                          transform: [{ scale: pressedRecipeId === recipe.id ? 0.97 : 1 }],
+                          borderColor: pressedRecipeId === recipe.id ? colors.primary : 'transparent',
+                          borderWidth: 2,
+                        },
                       ]}
+                      onPressIn={() => setPressedRecipeId(recipe.id)}
+                      onPressOut={() => setPressedRecipeId(null)}
                       onPress={() => handleAssignRecipe(recipe.id, recipe.name)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Add ${recipe.name} to ${selectedSlot.day} ${selectedSlot.meal}`}
                     >
                       <Text
                         style={[styles.recipeCardName, { color: colors.foreground }]}
@@ -275,7 +386,7 @@ export default function MealPlannerModal() {
                       <Text style={[styles.recipeCardCuisine, { color: colors.muted }]}>
                         {recipe.cuisine}
                       </Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   ))}
                 </ScrollView>
               ) : (
@@ -293,32 +404,14 @@ export default function MealPlannerModal() {
               <TouchableOpacity
                 style={styles.cancelButton}
                 onPress={() => setSelectedSlot(null)}
+                accessibilityLabel="Cancel selection"
+                accessibilityRole="button"
               >
                 <Text style={[styles.cancelText, { color: colors.muted }]}>Cancel</Text>
               </TouchableOpacity>
             </GlassView>
           </Animated.View>
         )}
-
-        {/* Instructions */}
-        <GlassView intensity="light" style={styles.instructions}>
-          <View style={styles.instructionItem}>
-            <View style={[styles.instructionIcon, { backgroundColor: colors.primary + '20' }]}>
-              <Feather name="plus" size={16} color={colors.primary} />
-            </View>
-            <Text style={[styles.instructionText, { color: colors.muted }]}>
-              Tap a slot to add a recipe
-            </Text>
-          </View>
-          <View style={styles.instructionItem}>
-            <View style={[styles.instructionIcon, { backgroundColor: colors.secondary + '20' }]}>
-              <Feather name="trash-2" size={16} color={colors.secondary} />
-            </View>
-            <Text style={[styles.instructionText, { color: colors.muted }]}>
-              Long press to remove a recipe
-            </Text>
-          </View>
-        </GlassView>
       </ScrollView>
     </View>
   );
@@ -345,6 +438,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 4,
   },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   content: {
     flex: 1,
   },
@@ -352,44 +450,107 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 16,
   },
-  calendarGrid: {
-    gap: 4,
-  },
-  gridRow: {
+  // Hints card
+  hintsCard: {
+    padding: 14,
     flexDirection: 'row',
-    gap: 4,
-  },
-  mealTypeColumn: {
-    width: 70,
-    justifyContent: 'center',
-    paddingRight: 8,
-  },
-  mealTypeText: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  dayHeader: {
-    flex: 1,
     alignItems: 'center',
-    paddingVertical: 8,
+    justifyContent: 'space-between',
   },
-  dayText: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  mealSlot: {
+  hintsContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
     flex: 1,
-    aspectRatio: 1,
+  },
+  hintText: {
+    fontSize: 14,
+    flex: 1,
+  },
+  dismissHint: {
+    fontSize: 14,
+    fontWeight: '600',
+    paddingLeft: 12,
+  },
+  // Calendar grid - horizontal scroll per meal
+  calendarGrid: {
+    gap: 20,
+  },
+  mealRow: {
+    gap: 10,
+  },
+  mealTypeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 4,
+  },
+  mealTypeIcon: {
+    width: 32,
+    height: 32,
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 4,
+  },
+  mealTypeText: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  daysScrollContent: {
+    paddingHorizontal: 4,
+    gap: 10,
+  },
+  mealSlot: {
+    width: 80,
+    height: 90,
+    borderRadius: 12,
+    padding: 8,
+    alignItems: 'center',
+  },
+  dayLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  slotContent: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    position: 'relative',
+  },
+  recipeIndicator: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
   },
   slotRecipe: {
-    fontSize: 10,
-    fontWeight: '500',
+    fontSize: 11,
+    fontWeight: '600',
     textAlign: 'center',
+    lineHeight: 13,
   },
+  deleteButton: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+  },
+  deleteIcon: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptySlot: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  // Recipe selection
   recipeSelection: {
     padding: 16,
   },
@@ -403,6 +564,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 12,
     marginRight: 10,
+    minHeight: 70,
   },
   recipeCardName: {
     fontSize: 14,
@@ -429,29 +591,12 @@ const styles = StyleSheet.create({
   cancelButton: {
     marginTop: 16,
     alignItems: 'center',
+    minHeight: 44,
+    justifyContent: 'center',
   },
   cancelText: {
     fontSize: 15,
     fontWeight: '500',
-  },
-  instructions: {
-    padding: 16,
-    gap: 12,
-  },
-  instructionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  instructionIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  instructionText: {
-    fontSize: 14,
   },
   // Premium gate styles
   premiumGateContainer: {

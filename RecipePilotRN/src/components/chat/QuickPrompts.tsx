@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   Pressable,
   useColorScheme,
   ScrollView,
+  Platform,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -20,6 +21,7 @@ import Animated, {
 
 import { Colors, Shadows, Gradients, EditorialColors } from '@/theme';
 import { hapticLight } from '@/lib/haptics';
+import { hasUsedRestaurantTrial } from '@/lib/storage';
 
 // Categorized prompts with icons
 const PROMPT_CATEGORIES = [
@@ -60,6 +62,8 @@ const PROMPT_CATEGORIES = [
 interface QuickPromptsProps {
   onSelectPrompt: (prompt: string) => void;
   isPremium?: boolean;
+  onMealPlannerPress?: () => void;
+  onRestaurantPress?: () => void;
 }
 
 // Animated chip component
@@ -117,14 +121,35 @@ function PromptChip({
   );
 }
 
-export default function QuickPrompts({ onSelectPrompt, isPremium = false }: QuickPromptsProps) {
+export default function QuickPrompts({
+  onSelectPrompt,
+  isPremium = false,
+  onMealPlannerPress,
+  onRestaurantPress,
+}: QuickPromptsProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const colors = isDark ? Colors.dark : Colors.light;
+  const [trialUsed, setTrialUsed] = useState(false);
+
+  // Check if restaurant trial has been used
+  useEffect(() => {
+    hasUsedRestaurantTrial().then(setTrialUsed);
+  }, []);
 
   const handlePromptPress = (prompt: string) => {
     hapticLight();
     onSelectPrompt(prompt);
+  };
+
+  const handleMealPlannerPress = () => {
+    hapticLight();
+    onMealPlannerPress?.();
+  };
+
+  const handleRestaurantPress = () => {
+    hapticLight();
+    onRestaurantPress?.();
   };
 
   return (
@@ -160,6 +185,97 @@ export default function QuickPrompts({ onSelectPrompt, isPremium = false }: Quic
           Discover recipes from around the world.{'\n'}
           What would you like to cook today?
         </Text>
+      </Animated.View>
+
+      {/* Feature Action Cards */}
+      <Animated.View
+        entering={FadeInUp.delay(150).duration(400).springify()}
+        style={styles.featureCardsContainer}
+      >
+        {/* Meal Planner Card */}
+        <Pressable
+          style={({ pressed }) => [
+            styles.featureCard,
+            {
+              backgroundColor: isDark ? colors.card : colors.cardElevated,
+              borderColor: colors.borderLight,
+              transform: [{ scale: pressed ? 0.98 : 1 }],
+            },
+            Shadows.md,
+          ]}
+          onPress={handleMealPlannerPress}
+        >
+          <LinearGradient
+            colors={['#7c3aed', '#a855f7']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.featureIconBg}
+          >
+            <Feather name="calendar" size={22} color="white" />
+          </LinearGradient>
+          <View style={styles.featureContent}>
+            <Text style={[styles.featureTitle, { color: colors.foreground }]}>
+              Plan Your Meals
+            </Text>
+            <Text style={[styles.featureSubtitle, { color: colors.muted }]}>
+              Weekly calendar & shopping lists
+            </Text>
+          </View>
+          {!isPremium && (
+            <View style={[styles.featureBadge, { backgroundColor: colors.accent }]}>
+              <Feather name="lock" size={10} color="white" />
+              <Text style={styles.featureBadgeText}>Premium</Text>
+            </View>
+          )}
+          <Feather name="chevron-right" size={20} color={colors.muted} />
+        </Pressable>
+
+        {/* Restaurant Recipes Card */}
+        <Pressable
+          style={({ pressed }) => [
+            styles.featureCard,
+            {
+              backgroundColor: isDark ? colors.card : colors.cardElevated,
+              borderColor: colors.borderLight,
+              transform: [{ scale: pressed ? 0.98 : 1 }],
+            },
+            Shadows.md,
+          ]}
+          onPress={handleRestaurantPress}
+        >
+          <LinearGradient
+            colors={['#f97316', '#fb923c']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.featureIconBg}
+          >
+            <Feather name="star" size={22} color="white" />
+          </LinearGradient>
+          <View style={styles.featureContent}>
+            <Text style={[styles.featureTitle, { color: colors.foreground }]}>
+              Restaurant Recipes
+            </Text>
+            <Text style={[styles.featureSubtitle, { color: colors.muted }]}>
+              Recreate your favorite dishes
+            </Text>
+          </View>
+          {!isPremium && (
+            <View style={[
+              styles.featureBadge,
+              { backgroundColor: trialUsed ? colors.accent : colors.success }
+            ]}>
+              {trialUsed ? (
+                <>
+                  <Feather name="lock" size={10} color="white" />
+                  <Text style={styles.featureBadgeText}>Premium</Text>
+                </>
+              ) : (
+                <Text style={styles.featureBadgeText}>1 Free</Text>
+              )}
+            </View>
+          )}
+          <Feather name="chevron-right" size={20} color={colors.muted} />
+        </Pressable>
       </Animated.View>
 
       {/* Prompt Categories with Horizontal Scroll Chips */}
@@ -346,5 +462,53 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: 40,
+  },
+  // Feature Action Cards
+  featureCardsContainer: {
+    paddingHorizontal: 16,
+    marginBottom: 24,
+    gap: 12,
+  },
+  featureCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    gap: 14,
+  },
+  featureIconBg: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  featureContent: {
+    flex: 1,
+    gap: 2,
+  },
+  featureTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: -0.2,
+  },
+  featureSubtitle: {
+    fontSize: 13,
+    fontWeight: '400',
+  },
+  featureBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 10,
+    gap: 4,
+  },
+  featureBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: 'white',
+    letterSpacing: 0.2,
   },
 });

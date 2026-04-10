@@ -12,7 +12,6 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-import { Audio } from 'expo-av';
 import * as Notifications from 'expo-notifications';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
@@ -51,7 +50,7 @@ export default function ToolsModal() {
   const [timers, setTimers] = useState<Timer[]>([]);
   const [newTimerMinutes, setNewTimerMinutes] = useState('');
   const [newTimerLabel, setNewTimerLabel] = useState('');
-  const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Converter state
   const [converterValue, setConverterValue] = useState('');
@@ -93,16 +92,6 @@ export default function ToolsModal() {
   const handleTimerComplete = useCallback(async (timer: Timer) => {
     hapticSuccess();
     showToast(`Timer "${timer.label}" is done!`, 'success');
-
-    // Play sound
-    try {
-      const { sound } = await Audio.Sound.createAsync(
-        require('../../assets/sounds/timer.wav')
-      );
-      await sound.playAsync();
-    } catch (error) {
-      console.log('Could not play sound:', error);
-    }
 
     // Send notification
     await Notifications.scheduleNotificationAsync({

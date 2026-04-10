@@ -1,14 +1,8 @@
 // Dynamic config that properly exposes environment variables
-// IMPORTANT: Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY via EAS Secrets
-// Run: eas secret:create --name EXPO_PUBLIC_SUPABASE_URL --value <your-url>
-// Run: eas secret:create --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value <your-key>
 module.exports = ({ config }) => {
-  const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    console.warn('⚠️ Supabase credentials not set. Set EAS Secrets for production builds.');
-  }
+  // Supabase configuration with hardcoded fallbacks for production
+  const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://bwddfoqaqgrbendjgchr.supabase.co';
+  const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ3ZGRmb3FhcWdyYmVuZGpnY2hyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzMjY4NzQsImV4cCI6MjA4MzkwMjg3NH0.oQLjkXCHpOIrd4ZKOcOX3MEbWmtWosOOqGRTsNTjHsk';
 
   return {
     ...config,

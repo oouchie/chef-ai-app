@@ -55,9 +55,9 @@ const FEATURES: Feature[] = [
     isPremium: true,
   },
   {
-    icon: 'zap-off',
-    title: 'Ad-Free Experience',
-    description: 'Enjoy cooking without interruptions',
+    icon: 'star',
+    title: 'Early Access',
+    description: 'Be first to try new features and recipes',
     isPremium: true,
   },
 ];
@@ -75,7 +75,26 @@ export default function PaywallModal() {
   const [packages, setPackages] = useState<any[]>([]);
   const [debugInfo, setDebugInfo] = useState<string>('');
 
-  // Load packages on mount
+  // Helper to check subscription status and close paywall if premium
+  const checkAndCloseIfPremium = useCallback(async () => {
+    try {
+      const status = await purchaseService.getSubscriptionStatus();
+      console.log('[Paywall] Subscription status:', status);
+
+      if (status.isPremium) {
+        console.log('[Paywall] User is already premium, closing paywall');
+        hapticSuccess();
+        router.back();
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('[Paywall] Failed to check subscription status:', error);
+      return false;
+    }
+  }, []);
+
+  // Load packages on mount and check if already premium
   useEffect(() => {
     const loadPackages = async () => {
       try {
@@ -102,9 +121,18 @@ export default function PaywallModal() {
           return;
         }
 
-        // Check subscription status
+        // Check subscription status and close if already premium
         const status = await purchaseService.getSubscriptionStatus();
         const statusStr = status.isPremium ? 'Premium' : 'Free';
+        console.log('[Paywall] Current status:', statusStr);
+
+        if (status.isPremium) {
+          console.log('[Paywall] User is already premium, closing paywall');
+          hapticSuccess();
+          showToast('You already have Premium!', 'success');
+          router.back();
+          return;
+        }
 
         // Get offerings
         setDebugInfo(`[${statusStr}] Fetching packages...`);
@@ -123,12 +151,34 @@ export default function PaywallModal() {
       }
     };
     loadPackages();
-  }, []);
+  }, [showToast]);
 
   const handlePurchase = useCallback(async () => {
     setIsLoading(true);
     try {
+      // Check if RevenueCat is properly initialized
+      const moduleStatus = purchaseService.getModuleStatus();
+      if (!moduleStatus.loaded) {
+        showToast('Purchase system not available. Please restart the app.', 'error');
+        return;
+      }
+      if (!moduleStatus.initialized) {
+        // Try to initialize again
+        await purchaseService.initialize();
+        const statusAfterInit = purchaseService.getModuleStatus();
+        if (!statusAfterInit.initialized) {
+          showToast('Could not connect to purchase system. Please try again.', 'error');
+          return;
+        }
+      }
+
       const offerings = await purchaseService.getOfferings();
+
+      if (!offerings || offerings.length === 0) {
+        console.error('[Paywall] No offerings available');
+        showToast('Products not available. Please try again later.', 'error');
+        return;
+      }
 
       // Match RevenueCat standard identifiers: $rc_monthly, $rc_annual
       // Also match custom identifiers containing monthly/yearly/annual
@@ -143,10 +193,12 @@ export default function PaywallModal() {
 
       if (!selectedPackage) {
         const availableIds = offerings.map((p: any) => p.identifier).join(', ');
-        showToast(`No ${selectedPlan} package. Available: ${availableIds || 'none'}`, 'error');
+        console.error('[Paywall] Package not found. Available:', availableIds);
+        showToast(`No ${selectedPlan} package found. Please try again.`, 'error');
         return;
       }
 
+      console.log('[Paywall] Purchasing package:', selectedPackage.identifier);
       const result = await purchaseService.purchasePackage(selectedPackage);
       if (result) {
         hapticSuccess();
@@ -154,19 +206,50 @@ export default function PaywallModal() {
         router.back();
       }
     } catch (error: any) {
-      console.error('Purchase error:', error);
+      console.error('[Paywall] Purchase error:', error);
+      console.error('[Paywall] Error details:', JSON.stringify(error, null, 2));
       hapticError();
-      showToast(error?.message || 'Purchase failed. Please try again.', 'error');
+
+      // Handle specific RevenueCat error codes
+      const errorCode = error?.code || error?.userInfo?.code || '';
+      const errorMessage = error?.message || error?.localizedDescription || '';
+
+      if (error?.userCancelled || errorCode === '1' || errorCode === 'PURCHASE_CANCELLED') {
+        // User cancelled - but still check if they're actually subscribed
+        // (handles case where Apple shows "already subscribed" dialog)
+        console.log('[Paywall] User cancelled or dismissed dialog, checking subscription status...');
+        const isPremium = await checkAndCloseIfPremium();
+        if (!isPremium) {
+          // User truly cancelled - don't show error
+          return;
+        }
+      } else if (errorCode === '2' || errorMessage.includes('network')) {
+        showToast('Network error. Please check your connection.', 'error');
+      } else if (errorCode === '3' || errorMessage.includes('receipt')) {
+        showToast('Could not verify purchase. Please try again.', 'error');
+      } else if (errorMessage.includes('product') || errorMessage.includes('SKError')) {
+        showToast('Product not available. Please try again later.', 'error');
+      } else {
+        // For any other error, refresh status (might be "already purchased")
+        console.log('[Paywall] Unknown error, checking if already subscribed...');
+        const isPremium = await checkAndCloseIfPremium();
+        if (!isPremium) {
+          // Show actual error for debugging
+          showToast(`Purchase failed: ${errorMessage || 'Unknown error'}`, 'error');
+        }
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [selectedPlan, showToast]);
+  }, [selectedPlan, showToast, checkAndCloseIfPremium]);
 
   const handleRestore = useCallback(async () => {
     setIsRestoring(true);
     try {
       const customerInfo = await purchaseService.restorePurchases();
-      const isPremium = !!customerInfo.entitlements.active['premium'];
+
+      // Safely check for premium entitlement (customerInfo can be null)
+      const isPremium = customerInfo?.entitlements?.active?.['premium'] ?? false;
 
       if (isPremium) {
         hapticSuccess();
@@ -175,10 +258,18 @@ export default function PaywallModal() {
       } else {
         showToast('No purchases to restore', 'info');
       }
-    } catch (error) {
-      console.error('Restore error:', error);
+    } catch (error: any) {
+      console.error('[Paywall] Restore error:', error);
+      console.error('[Paywall] Restore error details:', JSON.stringify(error, null, 2));
       hapticError();
-      showToast('Restore failed. Please try again.', 'error');
+
+      // Show more helpful error message
+      const errorMessage = error?.message || error?.localizedDescription || '';
+      if (errorMessage.includes('network')) {
+        showToast('Network error. Please check your connection.', 'error');
+      } else {
+        showToast(`Restore failed: ${errorMessage || 'Please try again.'}`, 'error');
+      }
     } finally {
       setIsRestoring(false);
     }
@@ -328,13 +419,6 @@ export default function PaywallModal() {
             )}
           </TouchableOpacity>
         </Animated.View>
-
-        {/* Debug Info - Remove before App Store release */}
-        {debugInfo ? (
-          <Text style={[styles.debugText, { color: colors.muted }]}>
-            {debugInfo}
-          </Text>
-        ) : null}
 
         {/* Subscription Details */}
         <View style={styles.subscriptionDetails}>
@@ -549,12 +633,5 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     textDecorationLine: 'underline',
     fontWeight: '500',
-  },
-  debugText: {
-    fontSize: 10,
-    textAlign: 'center',
-    marginTop: 16,
-    paddingHorizontal: 20,
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
 });
